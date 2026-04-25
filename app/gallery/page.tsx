@@ -37,6 +37,18 @@ function GalleryContent() {
     fetchAllSubmissions();
   }, []);
 
+  // 모달이 열렸을 때 배경 스크롤 방지
+  useEffect(() => {
+    if (selectedItem) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedItem]);
+
   useEffect(() => {
     let filtered = allSubmissions;
     if (selectedLocs.length > 0) {
