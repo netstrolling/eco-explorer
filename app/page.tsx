@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Leaf, Camera, Library } from 'lucide-react'
+import { Leaf, Camera, Library, Trophy } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -27,6 +27,11 @@ export default function Home() {
             <Link href="/gallery" className="btn btn-secondary" style={{ padding: '16px' }}>
               <Library size={20} />
               다함께 만든 도감 보기
+            </Link>
+
+            <Link href="/ranking" className="btn btn-secondary" style={{ padding: '16px', background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 140, 0, 0.1))', color: '#b8860b', border: '1px solid rgba(255, 215, 0, 0.3)' }}>
+              <Trophy size={20} />
+              명예의 전당 (랭킹)
             </Link>
           </div>
         </div>

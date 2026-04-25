@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Library, Filter, Search, MapPin, Grid, X } from 'lucide-react';
+import { Library, Filter, Search, MapPin, Grid, X, Trophy } from 'lucide-react';
 import { format } from 'date-fns';
 import Map from '../components/Map';
 
@@ -122,9 +122,14 @@ function GalleryContent() {
             <Library size={28} />
             우리의 도감
           </h1>
-          <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px' }}>
-            + 추가
-          </Link>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Link href="/ranking" className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', background: 'var(--primary-light)', color: 'white', border: 'none' }}>
+              <Trophy size={16} /> 랭킹
+            </Link>
+            <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px' }}>
+              + 추가
+            </Link>
+          </div>
         </div>
 
         <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px' }}>
