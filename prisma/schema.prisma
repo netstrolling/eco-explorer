@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Submission {
+  id         String   @id @default(cuid())
+  teamName   String
+  dateTime   DateTime
+  location   String
+  category   String
+  name       String
+  memo       String?
+  mediaUrls  String   // JSON stringified array of URLs
+  isHidden   Boolean  @default(false)
+  lat        Float?
+  lng        Float?
+  createdAt  DateTime @default(now())
+}
