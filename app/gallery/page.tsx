@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Library, Filter, Search, MapPin, Grid, X } from 'lucide-react';
@@ -11,6 +11,14 @@ const LOCATIONS = ['전체', '갯벌', '바다', '논', '밭', '숲', '기타'];
 const CATEGORIES = ['전체', '해양생물', '어류', '양서류', '파충류', '조류', '포유류', '곤충', '식물', '기타'];
 
 export default function GalleryPage() {
+  return (
+    <Suspense fallback={<div className="wide-container" style={{ textAlign: 'center', padding: '40px' }}>불러오는 중...</div>}>
+      <GalleryContent />
+    </Suspense>
+  );
+}
+
+function GalleryContent() {
   const searchParams = useSearchParams();
   const showSuccess = searchParams?.get('success');
   
