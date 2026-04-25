@@ -254,42 +254,52 @@ function GalleryContent() {
       {/* Detail Modal */}
       {selectedItem && (
         <div
-          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          style={{ 
+            position: 'fixed', 
+            top: 0, left: 0, right: 0, bottom: 0, 
+            background: 'rgba(0,0,0,0.8)', 
+            backdropFilter: 'blur(8px)', 
+            zIndex: 1000, 
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
           onClick={() => setSelectedItem(null)}
         >
-          <div
-            className="glass-panel animate-fade-in-up"
-            style={{ maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto', position: 'relative', padding: '24px' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedItem(null)}
-              style={{ position: 'absolute', top: '16px', right: '16px', background: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+          <div style={{ minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div
+              className="glass-panel animate-fade-in-up"
+              style={{ maxWidth: '800px', width: '100%', position: 'relative', padding: '24px' }}
+              onClick={e => e.stopPropagation()}
             >
-              <X size={20} />
-            </button>
+              <button
+                onClick={() => setSelectedItem(null)}
+                style={{ position: 'absolute', top: '16px', right: '16px', background: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+              >
+                <X size={20} />
+              </button>
 
-            <div style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', background: '#000', display: 'flex', justifyContent: 'center' }}>
-              <img
-                src={JSON.parse(selectedItem.mediaUrls || '[]')[0]}
-                alt={selectedItem.name}
-                style={{ width: 'auto', maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <h2 style={{ marginBottom: '4px', color: 'var(--primary)' }}>{selectedItem.name}</h2>
-                <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{selectedItem.teamName} · {format(new Date(selectedItem.dateTime), 'yyyy년 MM월 dd일 HH:mm')}</div>
+              <div style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', background: '#000', display: 'flex', justifyContent: 'center' }}>
+                <img
+                  src={JSON.parse(selectedItem.mediaUrls || '[]')[0]}
+                  alt={selectedItem.name}
+                  style={{ width: 'auto', maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain' }}
+                />
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <span className="badge badge-location">{selectedItem.location}</span>
-                <span className="badge badge-category">{selectedItem.category}</span>
-              </div>
-            </div>
 
-            <div style={{ background: 'rgba(0,0,0,0.03)', padding: '16px', borderRadius: '12px', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '15px' }}>
-              {selectedItem.memo || "작성된 메모가 없습니다."}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h2 style={{ marginBottom: '4px', color: 'var(--primary)' }}>{selectedItem.name}</h2>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{selectedItem.teamName} · {format(new Date(selectedItem.dateTime), 'yyyy년 MM월 dd일 HH:mm')}</div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <span className="badge badge-location">{selectedItem.location}</span>
+                  <span className="badge badge-category">{selectedItem.category}</span>
+                </div>
+              </div>
+
+              <div style={{ background: 'rgba(0,0,0,0.03)', padding: '16px', borderRadius: '12px', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '15px' }}>
+                {selectedItem.memo || "작성된 메모가 없습니다."}
+              </div>
             </div>
           </div>
         </div>
