@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Library, Filter, Search, MapPin, Grid, X, Trophy } from 'lucide-react';
+import { Library, Filter, Search, MapPin, Grid, X, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import Map from '../components/Map';
 
@@ -33,6 +33,7 @@ function GalleryContent() {
   const [viewMode, setViewMode] = useState<'masonry' | 'grid' | 'map'>('grid');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isUploadEnabled, setIsUploadEnabled] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
     fetchAllSubmissions();
@@ -170,57 +171,76 @@ function GalleryContent() {
                 <Trophy size={16} /> 랭킹
               </Link>
               {isUploadEnabled && (
-                <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', height: '36px' }}>
-                  + 추가
-                </Link>
+                <Link href="/submit" cl        <div className="glass-panel" style={{ padding: '20px 24px', marginBottom: '24px' }}>
+          <div 
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', fontWeight: 600, fontSize: '15px' }}>
+              <Filter size={18} /> 생물 종류 및 장소 필터링 
+              {((selectedLocs.length > 0 && selectedLocs.length !== availableLocs.length) || (selectedCats.length > 0 && selectedCats.length !== availableCats.length)) && (
+                <span style={{ fontSize: '12px', background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '12px', marginLeft: '4px' }}>
+                  적용 중
+                </span>
               )}
             </div>
+            {isFilterOpen ? <ChevronUp size={20} color="var(--primary)" /> : <ChevronDown size={20} color="var(--primary)" />}
           </div>
-        </div>
-
-        <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--primary)', fontWeight: 600, fontSize: '14px' }}>
-              <Filter size={18} /> 장소 (중복 선택)
-            </div>
-            <div className="filter-chips">
-              <button
-                onClick={() => toggleLoc('전체')}
-                className={`chip ${selectedLocs.length > 0 && selectedLocs.length === (allSubmissions.length > 0 ? Array.from(new Set(allSubmissions.map(s => s.location))).length : 0) ? 'active' : ''}`}
-              >전체 ({allSubmissions.length})</button>
-              {LOCATIONS.filter(l => l !== '전체').map(loc => {
-                const count = allSubmissions.filter(s => s.location === loc).length;
-                return (
+          
+          {isFilterOpen && (
+            <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.05)' }} className="animate-fade-in-up">
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--primary)', fontWeight: 600, fontSize: '14px' }}>
+                  장소 (중복 선택)
+                </div>
+                <div className="filter-chips">
                   <button
-                    key={loc}
-                    onClick={() => count > 0 && toggleLoc(loc)}
-                    className={`chip ${selectedLocs.includes(loc) ? 'active' : ''}`}
-                    style={{ opacity: count === 0 ? 0.4 : 1, cursor: count === 0 ? 'default' : 'pointer' }}
-                  >
-                    {loc}{count > 0 ? ` (${count})` : ''}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                    onClick={() => toggleLoc('전체')}
+                    className={`chip ${selectedLocs.length > 0 && selectedLocs.length === (allSubmissions.length > 0 ? Array.from(new Set(allSubmissions.map(s => s.location))).length : 0) ? 'active' : ''}`}
+                  >전체 ({allSubmissions.length})</button>
+                  {LOCATIONS.filter(l => l !== '전체').map(loc => {
+                    const count = allSubmissions.filter(s => s.location === loc).length;
+                    return (
+                      <button
+                        key={loc}
+                        onClick={() => count > 0 && toggleLoc(loc)}
+                        className={`chip ${selectedLocs.includes(loc) ? 'active' : ''}`}
+                        style={{ opacity: count === 0 ? 0.4 : 1, cursor: count === 0 ? 'default' : 'pointer' }}
+                      >
+                        {loc}{count > 0 ? ` (${count})` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--primary)', fontWeight: 600, fontSize: '14px' }}>
-              <Filter size={18} /> 종류 (중복 선택)
-            </div>
-            <div className="filter-chips">
-              <button
-                onClick={() => toggleCat('전체')}
-                className={`chip ${selectedCats.length > 0 && selectedCats.length === (allSubmissions.length > 0 ? Array.from(new Set(allSubmissions.map(s => s.category))).length : 0) ? 'active' : ''}`}
-              >전체 ({allSubmissions.length})</button>
-              {CATEGORIES.filter(c => c !== '전체').map(cat => {
-                const count = allSubmissions.filter(s => s.category === cat).length;
-                return (
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--primary)', fontWeight: 600, fontSize: '14px' }}>
+                  종류 (중복 선택)
+                </div>
+                <div className="filter-chips">
                   <button
-                    key={cat}
-                    onClick={() => count > 0 && toggleCat(cat)}
-                    className={`chip ${selectedCats.includes(cat) ? 'active' : ''}`}
-                    style={{ opacity: count === 0 ? 0.4 : 1, cursor: count === 0 ? 'default' : 'pointer' }}
+                    onClick={() => toggleCat('전체')}
+                    className={`chip ${selectedCats.length > 0 && selectedCats.length === (allSubmissions.length > 0 ? Array.from(new Set(allSubmissions.map(s => s.category))).length : 0) ? 'active' : ''}`}
+                  >전체 ({allSubmissions.length})</button>
+                  {CATEGORIES.filter(c => c !== '전체').map(cat => {
+                    const count = allSubmissions.filter(s => s.category === cat).length;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => count > 0 && toggleCat(cat)}
+                        className={`chip ${selectedCats.includes(cat) ? 'active' : ''}`}
+                        style={{ opacity: count === 0 ? 0.4 : 1, cursor: count === 0 ? 'default' : 'pointer' }}
+                      >
+                        {cat}{count > 0 ? ` (${count})` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>{{ opacity: count === 0 ? 0.4 : 1, cursor: count === 0 ? 'default' : 'pointer' }}
                   >
                     {cat}{count > 0 ? ` (${count})` : ''}
                   </button>
