@@ -95,7 +95,6 @@ export default function SubmitPage() {
       const res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
       if (res.ok) {
         const data = await res.json();
-        // 동음이의어 문서가 아니며 사진이 있는 경우
         if (data.type !== 'disambiguation' && (data.originalimage?.source || data.thumbnail?.source)) {
           return data.originalimage?.source || data.thumbnail?.source;
         }
@@ -103,33 +102,59 @@ export default function SubmitPage() {
       return null;
     };
 
+    const fetchCommons = async (searchTerm: string) => {
+      // 위키미디어 공용(전 세계 통합 이미지 DB)에서 한글 이름으로 검색
+      const searchRes = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm)}&utf8=&format=json&origin=*`);
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        if (searchData.query?.search?.length > 0) {
+          const pageId = searchData.query.search[0].pageid;
+          const imgRes = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&prop=pageimages&pithumbsize=800&pageids=${pageId}&format=json&origin=*`);
+          if (imgRes.ok) {
+            const imgData = await imgRes.json();
+            const pages = imgData.query?.pages;
+            if (pages && pages[pageId] && pages[pageId].thumbnail?.source) {
+              return pages[pageId].thumbnail.source;
+            }
+          }
+        }
+      }
+      return null;
+    };
+
     try {
-      // 1차 시도: 원본 이름 그대로 검색 (예: 참새)
-      let imageUrl = await fetchWiki(autoName.trim());
+      let imageUrl = null;
+      const cleanName = autoName.trim();
+
+      // 1. 한국어 위키백과 탐색 (가장 정확함)
+      imageUrl = await fetchWiki(cleanName);
       
-      // 2차 시도: 동음이의어인 경우 " (새)" 붙여서 검색 (예: 박새 -> 박새 (새))
       if (!imageUrl && autoCategory === '조류') {
-        imageUrl = await fetchWiki(`${autoName.trim()}_(새)`);
+        imageUrl = await fetchWiki(`${cleanName}_(새)`);
       }
-      
-      // 3차 시도: 혹시 "(조류)"로 등록되어 있을 경우 (예: 오리 (조류))
       if (!imageUrl && autoCategory === '조류') {
-        imageUrl = await fetchWiki(`${autoName.trim()}_(조류)`);
+        imageUrl = await fetchWiki(`${cleanName}_(조류)`);
       }
-      
-      // 4차 시도: 넓은 의미로 " (동물)"로 등록되어 있을 경우
       if (!imageUrl) {
-        imageUrl = await fetchWiki(`${autoName.trim()}_(동물)`);
+        imageUrl = await fetchWiki(`${cleanName}_(동물)`);
+      }
+      if (!imageUrl) {
+        imageUrl = await fetchWiki(`${cleanName}_(식물)`);
+      }
+
+      // 2. 한국어 위키백과에 없다면 위키미디어 공용(전 세계 DB) 탐색 (예: 칠게)
+      if (!imageUrl) {
+        imageUrl = await fetchCommons(cleanName);
       }
 
       if (imageUrl) {
         setWikiImageUrl(imageUrl);
       } else {
-        alert('위키백과에서 사진을 찾을 수 없습니다. 이름이 정확한지 확인해 주세요.');
+        alert('백과사전에서 해당 생물의 사진을 찾을 수 없습니다.');
       }
     } catch (e) {
       console.error('Wikipedia API error:', e);
-      alert('위키백과 검색 중 오류가 발생했습니다.');
+      alert('이미지 검색 중 오류가 발생했습니다.');
     } finally {
       setIsSearchingWiki(false);
     }
