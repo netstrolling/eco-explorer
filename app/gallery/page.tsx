@@ -194,7 +194,7 @@ function GalleryContent() {
             onClick={() => setIsFilterOpen(!isFilterOpen)}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', fontWeight: 600, fontSize: '15px' }}>
-              <Filter size={18} /> 생물 종류 및 장소 필터링 
+              <Filter size={18} /> 생물 종류 및 장소
               {((selectedLocs.length > 0 && selectedLocs.length !== availableLocs.length) || (selectedCats.length > 0 && selectedCats.length !== availableCats.length)) && (
                 <span style={{ fontSize: '12px', background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '12px', marginLeft: '4px' }}>
                   적용 중
@@ -296,7 +296,7 @@ function GalleryContent() {
                     )}
                     {isWiki && (
                       <div style={{ position: 'absolute', bottom: '10px', right: '14px', fontSize: '11px', color: '#999', fontWeight: 500, letterSpacing: '-0.3px' }}>
-                        출처: 위키백과
+                        사진: 위키백과
                       </div>
                     )}
                   </div>
@@ -307,7 +307,7 @@ function GalleryContent() {
                     <div className="gallery-title">{name}</div>
                     <div style={{ marginTop: '8px' }}>
                       <span className="badge" style={{ background: 'var(--primary)', color: 'white' }}>
-                        {subs.length}건 관찰됨
+                        {subs.length}
                       </span>
                     </div>
                   </div>
@@ -334,7 +334,7 @@ function GalleryContent() {
                     )}
                     {isWiki && (
                       <div style={{ position: 'absolute', bottom: '10px', right: '14px', fontSize: '11px', color: '#999', fontWeight: 500, letterSpacing: '-0.3px' }}>
-                        출처: 위키백과
+                        사진: 위키백과
                       </div>
                     )}
                   </div>
@@ -462,7 +462,7 @@ function GalleryContent() {
                         )}
                         {isWiki && (
                           <div style={{ position: 'absolute', bottom: '10px', right: '14px', fontSize: '11px', color: '#999', fontWeight: 500, letterSpacing: '-0.3px' }}>
-                            출처: 위키백과
+                            사진: 위키백과
                           </div>
                         )}
                       </div>
