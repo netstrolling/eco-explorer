@@ -131,22 +131,50 @@ function GalleryContent() {
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
           <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
             <h1 style={{ margin: 0, fontSize: '28px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
               <Library size={28} />
               우리의 도감
             </h1>
           </Link>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Link href="/ranking" className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', background: 'var(--primary-light)', color: 'white', border: 'none' }}>
-              <Trophy size={16} /> 랭킹
-            </Link>
-            {isUploadEnabled && (
-              <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px' }}>
-                + 추가
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* 보기 모드 그룹 */}
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid rgba(0,0,0,0.05)' }}>
+              <button
+                onClick={() => setViewMode('grid')}
+                title="정사각형 보기"
+                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'grid' ? 'var(--primary)' : 'transparent', color: viewMode === 'grid' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', height: '36px' }}
+              >
+                <Grid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('masonry')}
+                title="메이슨리 보기"
+                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'masonry' ? 'var(--primary)' : 'transparent', color: viewMode === 'masonry' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', height: '36px' }}
+              >
+                <Library size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                title="지도 보기"
+                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'map' ? 'var(--primary)' : 'transparent', color: viewMode === 'map' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', height: '36px' }}
+              >
+                <MapPin size={18} />
+              </button>
+            </div>
+
+            {/* 기존 액션 버튼 */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Link href="/ranking" className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', background: 'var(--primary-light)', color: 'white', border: 'none', height: '36px' }}>
+                <Trophy size={16} /> 랭킹
               </Link>
-            )}
+              {isUploadEnabled && (
+                <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', height: '36px' }}>
+                  + 추가
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 
@@ -201,34 +229,6 @@ function GalleryContent() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-secondary'}`}
-                title="정사각형 보기"
-                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px' }}
-              >
-                <Grid size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode('masonry')}
-                className={`btn ${viewMode === 'masonry' ? 'btn-primary' : 'btn-secondary'}`}
-                title="메이슨리 보기"
-                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px' }}
-              >
-                <Library size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={`btn ${viewMode === 'map' ? 'btn-primary' : 'btn-secondary'}`}
-                title="지도 보기"
-                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px' }}
-              >
-                <MapPin size={16} />
-              </button>
-            </div>
-          </div>
         </div>
 
         {loading ? (
