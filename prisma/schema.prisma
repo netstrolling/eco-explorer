@@ -22,3 +22,8 @@ model Submission {
   lng        Float?
   createdAt  DateTime @default(now())
 }
+
+model SystemSetting {
+  id              String  @id @default("global")
+  isUploadEnabled Boolean @default(true)
+}

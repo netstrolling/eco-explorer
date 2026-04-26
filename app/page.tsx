@@ -1,7 +1,13 @@
 import Link from 'next/link'
 import { Leaf, Camera, Library, Trophy } from 'lucide-react'
+import { prisma } from '@/lib/prisma'
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  let setting = await prisma.systemSetting.findUnique({ where: { id: 'global' } });
+  const isUploadEnabled = setting ? setting.isUploadEnabled : true;
+
   return (
     <main className="app-container">
       <div className="animate-fade-in-up" style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
@@ -19,10 +25,12 @@ export default function Home() {
           </p>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <Link href="/submit" className="btn btn-primary" style={{ padding: '16px' }}>
-              <Camera size={20} />
-              기록 시작하기
-            </Link>
+            {isUploadEnabled && (
+              <Link href="/submit" className="btn btn-primary" style={{ padding: '16px' }}>
+                <Camera size={20} />
+                기록 시작하기
+              </Link>
+            )}
             
             <Link href="/gallery" className="btn btn-secondary" style={{ padding: '16px' }}>
               <Library size={20} />

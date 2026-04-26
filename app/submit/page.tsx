@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Upload, X, Check, Loader2, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { Camera, Upload, X, Check, Loader2, Sparkles, ChevronLeft } from 'lucide-react';
 import exifr from 'exifr';
 
 const LOCATIONS = ['갯벌', '바다', '논', '밭', '숲', '기타'];
@@ -147,13 +148,21 @@ export default function SubmitPage() {
   return (
     <main className="app-container">
       <div className="animate-fade-in-up">
-        <div className="glass-panel">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-          <div style={{ background: 'var(--primary)', padding: '10px', borderRadius: '12px', color: 'white' }}>
-            <Camera size={24} />
-          </div>
-          <h1 style={{ margin: 0, fontSize: '24px' }}>발견 기록하기</h1>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px', position: 'relative' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)', textDecoration: 'none' }}>
+            <ChevronLeft size={24} />
+          </Link>
+          <h1 style={{ margin: 0, fontSize: '24px', flex: 1, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <div style={{ background: 'var(--primary)', padding: '8px', borderRadius: '12px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Camera size={20} />
+            </div>
+            발견 기록하기
+          </h1>
+          <div style={{ width: '24px' }}></div> {/* Spacer for centering */}
         </div>
+
+        <div className="glass-panel">
+
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">

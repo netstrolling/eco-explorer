@@ -32,10 +32,24 @@ function GalleryContent() {
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'masonry' | 'grid' | 'map'>('masonry');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [isUploadEnabled, setIsUploadEnabled] = useState(true);
 
   useEffect(() => {
     fetchAllSubmissions();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setIsUploadEnabled(data.isUploadEnabled);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // 모달이 열렸을 때 배경 스크롤 방지
   useEffect(() => {
@@ -118,17 +132,21 @@ function GalleryContent() {
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-          <h1 style={{ margin: 0, fontSize: '28px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Library size={28} />
-            우리의 도감
-          </h1>
+          <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <h1 style={{ margin: 0, fontSize: '28px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <Library size={28} />
+              우리의 도감
+            </h1>
+          </Link>
           <div style={{ display: 'flex', gap: '8px' }}>
             <Link href="/ranking" className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', background: 'var(--primary-light)', color: 'white', border: 'none' }}>
               <Trophy size={16} /> 랭킹
             </Link>
-            <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px' }}>
-              + 추가
-            </Link>
+            {isUploadEnabled && (
+              <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px' }}>
+                + 추가
+              </Link>
+            )}
           </div>
         </div>
 
