@@ -4,8 +4,9 @@ import RankingClient from './RankingClient';
 export const dynamic = 'force-dynamic';
 
 export default async function RankingPage() {
-  // 모든 사진 데이터를 가져옵니다 (최신순)
+  // 숨김 처리되지 않은 모든 사진 데이터를 가져옵니다 (최신순)
   const submissions = await prisma.submission.findMany({
+    where: { isHidden: false },
     orderBy: { dateTime: 'desc' }
   });
 

@@ -32,7 +32,8 @@ function GalleryContent() {
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'masonry' | 'grid' | 'map'>('grid');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
-  const [isUploadEnabled, setIsUploadEnabled] = useState(true);
+  const [isUploadEnabled, setIsUploadEnabled] = useState(false);
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
@@ -49,6 +50,8 @@ function GalleryContent() {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSettingsLoaded(true);
     }
   };
 
@@ -170,7 +173,7 @@ function GalleryContent() {
               <Link href="/ranking" className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', background: 'var(--primary-light)', color: 'white', border: 'none', height: '36px' }}>
                 <Trophy size={16} /> 랭킹
               </Link>
-              {isUploadEnabled && (
+              {isSettingsLoaded && isUploadEnabled && (
                 <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', height: '36px' }}>
                   + 추가
                 </Link>
