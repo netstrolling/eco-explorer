@@ -90,19 +90,42 @@ export default function SubmitPage() {
   const searchWikipediaImage = async () => {
     if (!autoName) return;
     setIsSearchingWiki(true);
-    try {
-      const res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(autoName.trim())}`);
+    
+    const fetchWiki = async (searchTerm: string) => {
+      const res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.originalimage && data.originalimage.source) {
-          setWikiImageUrl(data.originalimage.source);
-        } else if (data.thumbnail && data.thumbnail.source) {
-          setWikiImageUrl(data.thumbnail.source);
-        } else {
-          alert('위키백과에서 사진을 찾을 수 없습니다.');
+        // 동음이의어 문서가 아니며 사진이 있는 경우
+        if (data.type !== 'disambiguation' && (data.originalimage?.source || data.thumbnail?.source)) {
+          return data.originalimage?.source || data.thumbnail?.source;
         }
+      }
+      return null;
+    };
+
+    try {
+      // 1차 시도: 원본 이름 그대로 검색 (예: 참새)
+      let imageUrl = await fetchWiki(autoName.trim());
+      
+      // 2차 시도: 동음이의어인 경우 " (새)" 붙여서 검색 (예: 박새 -> 박새 (새))
+      if (!imageUrl && autoCategory === '조류') {
+        imageUrl = await fetchWiki(`${autoName.trim()}_(새)`);
+      }
+      
+      // 3차 시도: 혹시 "(조류)"로 등록되어 있을 경우 (예: 오리 (조류))
+      if (!imageUrl && autoCategory === '조류') {
+        imageUrl = await fetchWiki(`${autoName.trim()}_(조류)`);
+      }
+      
+      // 4차 시도: 넓은 의미로 " (동물)"로 등록되어 있을 경우
+      if (!imageUrl) {
+        imageUrl = await fetchWiki(`${autoName.trim()}_(동물)`);
+      }
+
+      if (imageUrl) {
+        setWikiImageUrl(imageUrl);
       } else {
-        alert('위키백과에서 해당 생물을 찾을 수 없습니다.');
+        alert('위키백과에서 사진을 찾을 수 없습니다. 이름이 정확한지 확인해 주세요.');
       }
     } catch (e) {
       console.error('Wikipedia API error:', e);
