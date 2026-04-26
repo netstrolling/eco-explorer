@@ -90,17 +90,15 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
                   </div>
 
                   {/* 썸네일 가로 스크롤 영역 */}
-                  <div style={{ 
+                  <div className="ranking-scroll" style={{ 
                     display: 'flex', 
                     gap: '12px', 
                     overflowX: 'auto', 
                     paddingBottom: '8px',
                     WebkitOverflowScrolling: 'touch',
-                    scrollbarWidth: 'none', // Firefox
-                    msOverflowStyle: 'none',  // IE and Edge
                   }}>
                     <style dangerouslySetInnerHTML={{__html: `
-                      div::-webkit-scrollbar { display: none; }
+                      .ranking-scroll::-webkit-scrollbar { display: none; }
                     `}} />
                     {ranking.submissions.map(sub => {
                       const urls = JSON.parse(sub.mediaUrls || '[]');
@@ -110,19 +108,21 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
                           key={sub.id}
                           onClick={() => setSelectedItem(sub)}
                           style={{
-                            minWidth: '80px',
+                            flex: '0 0 80px',
+                            width: '80px',
                             height: '80px',
                             borderRadius: '12px',
                             overflow: 'hidden',
                             cursor: 'pointer',
-                            flexShrink: 0,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                            position: 'relative',
+                            backgroundColor: 'rgba(0,0,0,0.05)'
                           }}
                         >
                           <img 
                             src={urls[0]} 
                             alt={sub.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                         </div>
                       )
