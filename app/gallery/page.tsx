@@ -30,7 +30,7 @@ function GalleryContent() {
   const [availableCats, setAvailableCats] = useState<string[]>([]);
   const [selectedLocs, setSelectedLocs] = useState<string[]>([]);
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'masonry' | 'grid' | 'map'>('masonry');
+  const [viewMode, setViewMode] = useState<'masonry' | 'grid' | 'map'>('grid');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isUploadEnabled, setIsUploadEnabled] = useState(true);
 
@@ -204,25 +204,28 @@ function GalleryContent() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button
-                onClick={() => setViewMode('masonry')}
-                className={`btn ${viewMode === 'masonry' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '8px 16px', display: 'flex', gap: '8px', alignItems: 'center', minWidth: '90px', justifyContent: 'center', height: '36px', fontSize: '13px', width: 'auto' }}
-              >
-                <Library size={14} /> 메이슨리
-              </button>
-              <button
                 onClick={() => setViewMode('grid')}
                 className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '8px 16px', display: 'flex', gap: '8px', alignItems: 'center', minWidth: '90px', justifyContent: 'center', height: '36px', fontSize: '13px', width: 'auto' }}
+                title="정사각형 보기"
+                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px' }}
               >
-                <Grid size={14} /> 정사각형
+                <Grid size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('masonry')}
+                className={`btn ${viewMode === 'masonry' ? 'btn-primary' : 'btn-secondary'}`}
+                title="메이슨리 보기"
+                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px' }}
+              >
+                <Library size={16} />
               </button>
               <button
                 onClick={() => setViewMode('map')}
                 className={`btn ${viewMode === 'map' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '8px 16px', display: 'flex', gap: '8px', alignItems: 'center', minWidth: '90px', justifyContent: 'center', height: '36px', fontSize: '13px', width: 'auto' }}
+                title="지도 보기"
+                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px' }}
               >
-                <MapPin size={14} /> 지도
+                <MapPin size={16} />
               </button>
             </div>
           </div>
