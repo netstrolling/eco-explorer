@@ -22,6 +22,8 @@ export default function SubmitPage() {
   const [autoName, setAutoName] = useState('');
   const [gpsLat, setGpsLat] = useState<number | null>(null);
   const [gpsLng, setGpsLng] = useState<number | null>(null);
+  const [wikiImageUrl, setWikiImageUrl] = useState('');
+  const [isSearchingWiki, setIsSearchingWiki] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('galdar_teamName');
@@ -85,6 +87,31 @@ export default function SubmitPage() {
     });
   };
 
+  const searchWikipediaImage = async () => {
+    if (!autoName) return;
+    setIsSearchingWiki(true);
+    try {
+      const res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(autoName.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.originalimage && data.originalimage.source) {
+          setWikiImageUrl(data.originalimage.source);
+        } else if (data.thumbnail && data.thumbnail.source) {
+          setWikiImageUrl(data.thumbnail.source);
+        } else {
+          alert('위키백과에서 사진을 찾을 수 없습니다.');
+        }
+      } else {
+        alert('위키백과에서 해당 생물을 찾을 수 없습니다.');
+      }
+    } catch (e) {
+      console.error('Wikipedia API error:', e);
+      alert('위키백과 검색 중 오류가 발생했습니다.');
+    } finally {
+      setIsSearchingWiki(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -92,6 +119,11 @@ export default function SubmitPage() {
     try {
       const formData = new FormData(e.currentTarget);
       let mediaUrls: string[] = [];
+
+      // 위키백과 이미지가 있다면 먼저 추가
+      if (wikiImageUrl) {
+        mediaUrls.push(wikiImageUrl);
+      }
 
       // 1. Upload files first if any
       if (files.length > 0) {
@@ -105,7 +137,7 @@ export default function SubmitPage() {
         
         if (!uploadRes.ok) throw new Error('File upload failed');
         const uploadResult = await uploadRes.json();
-        mediaUrls = uploadResult.urls;
+        mediaUrls = [...mediaUrls, ...uploadResult.urls];
       }
 
       // 2. Submit data
@@ -217,6 +249,20 @@ export default function SubmitPage() {
               </div>
             )}
 
+            {wikiImageUrl && (
+              <div style={{ marginTop: '16px' }}>
+                <div style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 600, marginBottom: '8px' }}>위키백과에서 찾은 이미지</div>
+                <div className="file-preview-grid">
+                  <div className="file-preview-item">
+                    <img src={wikiImageUrl} alt="Wikipedia Search Result" />
+                    <button type="button" className="remove-file" onClick={() => setWikiImageUrl('')}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {isAnalyzing && (
               <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(13, 110, 253, 0.1)', color: 'var(--secondary-light)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600 }}>
                 <Sparkles size={18} />
@@ -247,7 +293,22 @@ export default function SubmitPage() {
 
           <div className="form-group">
             <label className="form-label">생물 이름</label>
-            <input type="text" name="name" className="form-control" placeholder="모를 경우 비워두면 '모름'으로 기록됩니다." value={autoName} onChange={e => setAutoName(e.target.value)} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input type="text" name="name" className="form-control" placeholder="이름을 입력하세요 (예: 참새)" value={autoName} onChange={e => setAutoName(e.target.value)} style={{ flex: 1 }} />
+              <button 
+                type="button" 
+                onClick={searchWikipediaImage}
+                disabled={!autoName || isSearchingWiki}
+                className="btn btn-secondary" 
+                style={{ width: 'auto', padding: '0 16px', whiteSpace: 'nowrap', display: 'flex', gap: '8px', alignItems: 'center' }}
+              >
+                {isSearchingWiki ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                사진 자동 찾기
+              </button>
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
+              * 사진 찍기 어려운 새나 동물을 보셨다면, 이름 입력 후 [사진 자동 찾기]를 눌러 백과사전 이미지를 가져올 수 있습니다.
+            </div>
           </div>
 
           <div className="form-group">
