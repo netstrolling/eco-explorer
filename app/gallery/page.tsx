@@ -282,12 +282,13 @@ function GalleryContent() {
               const mainSub = subs[0];
               const urls = JSON.parse(mainSub.mediaUrls || '[]');
               const mainImg = urls.length > 0 ? urls[0] : null;
+              const isWiki = mainImg && (mainImg.includes('wikimedia.org') || mainImg.includes('wikipedia.org'));
 
               return (
                 <div key={name} className="gallery-card" onClick={() => setSelectedGroup(name)} style={{ cursor: 'pointer' }}>
-                  <div className="gallery-image-container">
+                  <div className="gallery-image-container" style={isWiki ? { padding: '8px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)' } : {}}>
                     {mainImg ? (
-                      <img src={mainImg} alt={name} loading="lazy" />
+                      <img src={mainImg} alt={name} loading="lazy" style={isWiki ? { borderRadius: '4px' } : {}} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>
                         이미지 없음
@@ -314,12 +315,13 @@ function GalleryContent() {
             {submissions.map((item) => {
               const urls = JSON.parse(item.mediaUrls || '[]');
               const mainImg = urls.length > 0 ? urls[0] : null;
+              const isWiki = mainImg && (mainImg.includes('wikimedia.org') || mainImg.includes('wikipedia.org'));
 
               return (
                 <div key={item.id} className="gallery-card" onClick={() => setSelectedItem(item)} style={{ cursor: 'pointer' }}>
-                  <div className="gallery-image-container">
+                  <div className="gallery-image-container" style={isWiki ? { padding: '8px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)' } : {}}>
                     {mainImg ? (
-                      <img src={mainImg} alt={item.name} loading="lazy" />
+                      <img src={mainImg} alt={item.name} loading="lazy" style={isWiki ? { borderRadius: '4px' } : {}} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>
                         이미지 없음
@@ -436,12 +438,13 @@ function GalleryContent() {
                 {submissions.filter(s => s.name === selectedGroup).map((item) => {
                   const urls = JSON.parse(item.mediaUrls || '[]');
                   const mainImg = urls.length > 0 ? urls[0] : null;
+                  const isWiki = mainImg && (mainImg.includes('wikimedia.org') || mainImg.includes('wikipedia.org'));
 
                   return (
                     <div key={item.id} className="gallery-card" onClick={() => setSelectedItem(item)} style={{ cursor: 'pointer' }}>
-                      <div className="gallery-image-container">
+                      <div className="gallery-image-container" style={isWiki ? { padding: '8px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)' } : {}}>
                         {mainImg ? (
-                          <img src={mainImg} alt={item.name} loading="lazy" />
+                          <img src={mainImg} alt={item.name} loading="lazy" style={isWiki ? { borderRadius: '4px' } : {}} />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>
                             이미지 없음
