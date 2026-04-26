@@ -272,13 +272,13 @@ function GalleryContent() {
           <Map submissions={submissions} />
         ) : viewMode === 'group' ? (
           <div className="gallery-grid-square">
-            {Object.entries(
+            {(Object.entries(
               submissions.reduce((acc, curr) => {
                 if (!acc[curr.name]) acc[curr.name] = [];
                 acc[curr.name].push(curr);
                 return acc;
               }, {} as Record<string, any[]>)
-            ).sort((a, b) => b[1].length - a[1].length).map(([name, subs]) => {
+            ) as [string, any[]][]).sort((a, b) => b[1].length - a[1].length).map(([name, subs]) => {
               const mainSub = subs[0];
               const urls = JSON.parse(mainSub.mediaUrls || '[]');
               const mainImg = urls.length > 0 ? urls[0] : null;
