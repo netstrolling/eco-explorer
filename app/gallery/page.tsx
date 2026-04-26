@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Library, Filter, Search, MapPin, Grid, X, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Library, Filter, Search, MapPin, Grid, X, Trophy, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import { format } from 'date-fns';
 import Map from '../components/Map';
 
@@ -30,8 +30,9 @@ function GalleryContent() {
   const [availableCats, setAvailableCats] = useState<string[]>([]);
   const [selectedLocs, setSelectedLocs] = useState<string[]>([]);
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'masonry' | 'grid' | 'map'>('grid');
+  const [viewMode, setViewMode] = useState<'masonry' | 'grid' | 'map' | 'group'>('grid');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [isUploadEnabled, setIsUploadEnabled] = useState(false);
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -57,15 +58,13 @@ function GalleryContent() {
 
   // 모달이 열렸을 때 배경 스크롤 방지
   useEffect(() => {
-    if (selectedItem) {
+    if (selectedItem || selectedGroup) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [selectedItem]);
+    return () => { document.body.style.overflow = ''; };
+  }, [selectedItem, selectedGroup]);
 
   useEffect(() => {
     let filtered = allSubmissions;
@@ -158,6 +157,13 @@ function GalleryContent() {
                 style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'masonry' ? 'var(--primary)' : 'transparent', color: viewMode === 'masonry' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', height: '36px' }}
               >
                 <Library size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('group')}
+                title="종별 모아보기"
+                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'group' ? 'var(--primary)' : 'transparent', color: viewMode === 'group' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', height: '36px' }}
+              >
+                <Layers size={18} />
               </button>
               <button
                 onClick={() => setViewMode('map')}
@@ -264,6 +270,45 @@ function GalleryContent() {
           </div>
         ) : viewMode === 'map' ? (
           <Map submissions={submissions} />
+        ) : viewMode === 'group' ? (
+          <div className="gallery-grid-square">
+            {Object.entries(
+              submissions.reduce((acc, curr) => {
+                if (!acc[curr.name]) acc[curr.name] = [];
+                acc[curr.name].push(curr);
+                return acc;
+              }, {} as Record<string, any[]>)
+            ).sort((a, b) => b[1].length - a[1].length).map(([name, subs]) => {
+              const mainSub = subs[0];
+              const urls = JSON.parse(mainSub.mediaUrls || '[]');
+              const mainImg = urls.length > 0 ? urls[0] : null;
+
+              return (
+                <div key={name} className="gallery-card" onClick={() => setSelectedGroup(name)} style={{ cursor: 'pointer' }}>
+                  <div className="gallery-image-container">
+                    {mainImg ? (
+                      <img src={mainImg} alt={name} loading="lazy" />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>
+                        이미지 없음
+                      </div>
+                    )}
+                  </div>
+                  <div className="gallery-info">
+                    <div className="gallery-meta">
+                      <span className="badge badge-category">{mainSub.category}</span>
+                    </div>
+                    <div className="gallery-title">{name}</div>
+                    <div style={{ marginTop: '8px' }}>
+                      <span className="badge" style={{ background: 'var(--primary)', color: 'white' }}>
+                        {subs.length}건 관찰됨
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className={viewMode === 'masonry' ? 'gallery-masonry' : 'gallery-grid-square'}>
             {submissions.map((item) => {
@@ -307,7 +352,7 @@ function GalleryContent() {
             top: 0, left: 0, right: 0, bottom: 0, 
             background: 'rgba(0,0,0,0.8)', 
             backdropFilter: 'blur(8px)', 
-            zIndex: 1000, 
+            zIndex: 1010, 
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch'
           }}
@@ -347,6 +392,72 @@ function GalleryContent() {
 
               <div style={{ background: 'rgba(0,0,0,0.03)', padding: '16px', borderRadius: '12px', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '15px' }}>
                 {selectedItem.memo || "작성된 메모가 없습니다."}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Group Detail Modal */}
+      {selectedGroup && (
+        <div
+          style={{ 
+            position: 'fixed', 
+            top: 0, left: 0, right: 0, bottom: 0, 
+            background: 'rgba(0,0,0,0.8)', 
+            backdropFilter: 'blur(8px)', 
+            zIndex: 1000, 
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
+          onClick={() => setSelectedGroup(null)}
+        >
+          <div style={{ minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div
+              className="glass-panel animate-fade-in-up"
+              style={{ maxWidth: '900px', width: '100%', position: 'relative', padding: '32px', background: 'var(--bg-color)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setSelectedGroup(null)}
+                style={{ position: 'absolute', top: '24px', right: '24px', background: 'var(--primary-light)', color: 'white', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+              >
+                <X size={20} />
+              </button>
+
+              <div style={{ marginBottom: '24px', textAlign: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '24px' }}>
+                <h2 style={{ fontSize: '32px', color: 'var(--primary)', marginBottom: '8px' }}>{selectedGroup}</h2>
+                <div style={{ color: 'var(--text-muted)' }}>
+                  총 {submissions.filter(s => s.name === selectedGroup).length}번 기록되었습니다
+                </div>
+              </div>
+
+              <div className="gallery-masonry" style={{ marginTop: '24px' }}>
+                {submissions.filter(s => s.name === selectedGroup).map((item) => {
+                  const urls = JSON.parse(item.mediaUrls || '[]');
+                  const mainImg = urls.length > 0 ? urls[0] : null;
+
+                  return (
+                    <div key={item.id} className="gallery-card" onClick={() => setSelectedItem(item)} style={{ cursor: 'pointer' }}>
+                      <div className="gallery-image-container">
+                        {mainImg ? (
+                          <img src={mainImg} alt={item.name} loading="lazy" />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>
+                            이미지 없음
+                          </div>
+                        )}
+                      </div>
+                      <div className="gallery-info" style={{ padding: '12px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>{item.teamName}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{item.location}</span>
+                          <span>{format(new Date(item.dateTime), 'MM/dd')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
