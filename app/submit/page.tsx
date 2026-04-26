@@ -142,13 +142,19 @@ export default function SubmitPage() {
 
       // 2. Submit data
       const teamName = formData.get('teamName') as string;
+      
+      let finalMemo = formData.get('memo') as string || '';
+      if (wikiImageUrl) {
+        finalMemo += finalMemo ? '\n\n(사진 출처: 위키백과)' : '(사진 출처: 위키백과)';
+      }
+
       const data = {
         teamName,
         dateTime: formData.get('dateTime'),
         location: formData.get('location'),
         category: formData.get('category'),
         name: formData.get('name') || '모름',
-        memo: formData.get('memo'),
+        memo: finalMemo,
         mediaUrls,
         lat: gpsLat,
         lng: gpsLng
@@ -272,16 +278,6 @@ export default function SubmitPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">발견 장소 *</label>
-            <select name="location" className="form-control" required value={autoLocation} onChange={e => setAutoLocation(e.target.value)}>
-              <option value="">장소 선택</option>
-              {LOCATIONS.map(loc => (
-                <option key={loc} value={loc}>{loc}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
             <label className="form-label">생물 종류 *</label>
             <select name="category" className="form-control" required value={autoCategory} onChange={e => setAutoCategory(e.target.value)}>
               <option value="">종류 선택</option>
@@ -294,21 +290,35 @@ export default function SubmitPage() {
           <div className="form-group">
             <label className="form-label">생물 이름</label>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="text" name="name" className="form-control" placeholder="이름을 입력하세요 (예: 참새)" value={autoName} onChange={e => setAutoName(e.target.value)} style={{ flex: 1 }} />
-              <button 
-                type="button" 
-                onClick={searchWikipediaImage}
-                disabled={!autoName || isSearchingWiki}
-                className="btn btn-secondary" 
-                style={{ width: 'auto', padding: '0 16px', whiteSpace: 'nowrap', display: 'flex', gap: '8px', alignItems: 'center' }}
-              >
-                {isSearchingWiki ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                사진 자동 찾기
-              </button>
+              <input type="text" name="name" className="form-control" placeholder="모를 경우 비워두면 '모름'으로 기록됩니다." value={autoName} onChange={e => setAutoName(e.target.value)} style={{ flex: 1 }} />
+              {autoCategory === '조류' && (
+                <button 
+                  type="button" 
+                  onClick={searchWikipediaImage}
+                  disabled={!autoName || isSearchingWiki}
+                  className="btn btn-secondary" 
+                  style={{ width: 'auto', padding: '0 16px', whiteSpace: 'nowrap', display: 'flex', gap: '8px', alignItems: 'center' }}
+                >
+                  {isSearchingWiki ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  사진 자동 찾기
+                </button>
+              )}
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
-              * 사진 찍기 어려운 새나 동물을 보셨다면, 이름 입력 후 [사진 자동 찾기]를 눌러 백과사전 이미지를 가져올 수 있습니다.
-            </div>
+            {autoCategory === '조류' && (
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                * 사진 찍기 어려운 새소리를 들으셨다면, 이름 입력 후 [사진 자동 찾기]를 눌러 이미지를 가져올 수 있습니다.
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">발견 장소 *</label>
+            <select name="location" className="form-control" required value={autoLocation} onChange={e => setAutoLocation(e.target.value)}>
+              <option value="">장소 선택</option>
+              {LOCATIONS.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">
