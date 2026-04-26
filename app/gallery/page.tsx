@@ -171,7 +171,15 @@ function GalleryContent() {
                 <Trophy size={16} /> 랭킹
               </Link>
               {isUploadEnabled && (
-                <Link href="/submit" cl        <div className="glass-panel" style={{ padding: '20px 24px', marginBottom: '24px' }}>
+                <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', height: '36px' }}>
+                  + 추가
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '20px 24px', marginBottom: '24px' }}>
           <div 
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
             onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -240,15 +248,6 @@ function GalleryContent() {
               </div>
             </div>
           )}
-        </div>{{ opacity: count === 0 ? 0.4 : 1, cursor: count === 0 ? 'default' : 'pointer' }}
-                  >
-                    {cat}{count > 0 ? ` (${count})` : ''}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
         </div>
 
         {loading ? (
