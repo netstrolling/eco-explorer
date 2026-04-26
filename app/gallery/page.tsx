@@ -286,12 +286,17 @@ function GalleryContent() {
 
               return (
                 <div key={name} className="gallery-card" onClick={() => setSelectedGroup(name)} style={{ cursor: 'pointer' }}>
-                  <div className="gallery-image-container" style={isWiki ? { padding: '8px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)' } : {}}>
+                  <div className="gallery-image-container" style={isWiki ? { padding: '12px 12px 36px 12px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)', position: 'relative' } : {}}>
                     {mainImg ? (
-                      <img src={mainImg} alt={name} loading="lazy" style={isWiki ? { borderRadius: '4px' } : {}} />
+                      <img src={mainImg} alt={name} loading="lazy" style={isWiki ? { borderRadius: '4px', border: '1px solid rgba(0,0,0,0.05)' } : {}} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>
                         이미지 없음
+                      </div>
+                    )}
+                    {isWiki && (
+                      <div style={{ position: 'absolute', bottom: '10px', right: '14px', fontSize: '11px', color: '#999', fontWeight: 500, letterSpacing: '-0.3px' }}>
+                        출처: 위키백과
                       </div>
                     )}
                   </div>
@@ -319,12 +324,17 @@ function GalleryContent() {
 
               return (
                 <div key={item.id} className="gallery-card" onClick={() => setSelectedItem(item)} style={{ cursor: 'pointer' }}>
-                  <div className="gallery-image-container" style={isWiki ? { padding: '8px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)' } : {}}>
+                  <div className="gallery-image-container" style={isWiki ? { padding: '12px 12px 36px 12px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)', position: 'relative' } : {}}>
                     {mainImg ? (
-                      <img src={mainImg} alt={item.name} loading="lazy" style={isWiki ? { borderRadius: '4px' } : {}} />
+                      <img src={mainImg} alt={item.name} loading="lazy" style={isWiki ? { borderRadius: '4px', border: '1px solid rgba(0,0,0,0.05)' } : {}} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>
                         이미지 없음
+                      </div>
+                    )}
+                    {isWiki && (
+                      <div style={{ position: 'absolute', bottom: '10px', right: '14px', fontSize: '11px', color: '#999', fontWeight: 500, letterSpacing: '-0.3px' }}>
+                        출처: 위키백과
                       </div>
                     )}
                   </div>
@@ -442,12 +452,17 @@ function GalleryContent() {
 
                   return (
                     <div key={item.id} className="gallery-card" onClick={() => setSelectedItem(item)} style={{ cursor: 'pointer' }}>
-                      <div className="gallery-image-container" style={isWiki ? { padding: '8px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)' } : {}}>
+                      <div className="gallery-image-container" style={isWiki ? { padding: '12px 12px 36px 12px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)', position: 'relative' } : {}}>
                         {mainImg ? (
-                          <img src={mainImg} alt={item.name} loading="lazy" style={isWiki ? { borderRadius: '4px' } : {}} />
+                          <img src={mainImg} alt={item.name} loading="lazy" style={isWiki ? { borderRadius: '4px', border: '1px solid rgba(0,0,0,0.05)' } : {}} />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>
                             이미지 없음
+                          </div>
+                        )}
+                        {isWiki && (
+                          <div style={{ position: 'absolute', bottom: '10px', right: '14px', fontSize: '11px', color: '#999', fontWeight: 500, letterSpacing: '-0.3px' }}>
+                            출처: 위키백과
                           </div>
                         )}
                       </div>
