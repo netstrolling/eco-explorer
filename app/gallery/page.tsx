@@ -36,10 +36,12 @@ function GalleryContent() {
   const [isUploadEnabled, setIsUploadEnabled] = useState(false);
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeEvents, setActiveEvents] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAllSubmissions();
     fetchSettings();
+    fetch('/api/events').then(r => r.json()).then(data => setActiveEvents(data.filter((e: any) => e.isActive))).catch(() => {});
   }, []);
 
   const fetchSettings = async () => {
@@ -133,6 +135,18 @@ function GalleryContent() {
             ✨ 성공적으로 도감에 기록되었습니다!
           </div>
         )}
+
+        {activeEvents.map((ev: any) => (
+          <Link key={ev.id} href={`/events/${ev.slug}`} style={{ textDecoration: 'none', display: 'block', marginBottom: '12px' }}>
+            <div style={{ background: 'var(--primary)', color: 'white', borderRadius: '16px', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontWeight: 700, fontSize: '15px' }}>{ev.name}</span>
+                <span style={{ background: 'rgba(255,255,255,0.25)', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>진행중</span>
+              </div>
+              <span style={{ fontSize: '13px', opacity: 0.85 }}>행사 도감 보기 →</span>
+            </div>
+          </Link>
+        ))}
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
           <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>

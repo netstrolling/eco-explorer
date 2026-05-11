@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Leaf, Camera, Library, Trophy } from 'lucide-react'
+import { Leaf, Camera, Library, Trophy, CalendarDays } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic';
@@ -7,10 +7,29 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   let setting = await prisma.systemSetting.findUnique({ where: { id: 'global' } });
   const isUploadEnabled = setting ? setting.isUploadEnabled : true;
+  const activeEvents = await prisma.event.findMany({ where: { isActive: true }, orderBy: { startDate: 'asc' } });
 
   return (
     <main className="app-container">
       <div className="animate-fade-in-up" style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
+
+        {activeEvents.length > 0 && (
+          <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {activeEvents.map((ev: (typeof activeEvents)[number]) => (
+              <Link key={ev.id} href={`/events/${ev.slug}`} style={{ textDecoration: 'none' }}>
+                <div style={{ background: 'var(--primary)', color: 'white', borderRadius: '16px', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <CalendarDays size={18} />
+                    <span style={{ fontWeight: 700, fontSize: '15px' }}>{ev.name}</span>
+                    <span style={{ background: 'rgba(255,255,255,0.25)', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>진행중</span>
+                  </div>
+                  <span style={{ fontSize: '13px', opacity: 0.85 }}>도감 보기 →</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
         <div className="glass-panel" style={{ textAlign: 'center', padding: '40px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
             <div style={{ background: 'var(--primary-light)', padding: '16px', borderRadius: '50%', color: 'white' }}>

@@ -62,6 +62,15 @@ export default function AdminPage() {
     else alert('행사 생성 실패');
   };
 
+  const handleToggleActive = async (ev: any) => {
+    const res = await fetch(`/api/events/${ev.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: !ev.isActive, password }),
+    });
+    if (res.ok) fetchEvents();
+  };
+
   const handleDeleteEvent = async (id: string) => {
     if (!confirm('행사를 삭제하면 연결된 기록들의 행사 태그도 사라집니다. 계속하시겠습니까?')) return;
     const res = await fetch(`/api/events/${id}`, {
@@ -339,13 +348,22 @@ export default function AdminPage() {
                     {new Date(ev.startDate).toLocaleDateString('ko')} ~ {new Date(ev.endDate).toLocaleDateString('ko')}
                   </td>
                   <td style={{ padding: '10px 12px', fontSize: '13px' }}>/events/{ev.slug}</td>
-                  <td style={{ padding: '10px 12px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button onClick={() => openGuideEditor(ev)} title="안내 페이지 편집" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
-                      <BookOpen size={16} /> 안내 편집
-                    </button>
-                    <button onClick={() => handleDeleteEvent(ev.id)} title="삭제" style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', padding: '4px' }}>
-                      <Trash2 size={16} />
-                    </button>
+                  <td style={{ padding: '10px 12px' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                      <button
+                        onClick={() => handleToggleActive(ev)}
+                        title={ev.isActive ? '홈/갤러리 표시 끄기' : '홈/갤러리에 표시'}
+                        style={{ fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', border: 'none', cursor: 'pointer', background: ev.isActive ? 'var(--primary)' : '#e9ecef', color: ev.isActive ? 'white' : '#6c757d' }}
+                      >
+                        {ev.isActive ? '진행중 표시' : '표시 꺼짐'}
+                      </button>
+                      <button onClick={() => openGuideEditor(ev)} title="안내 페이지 편집" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                        <BookOpen size={16} /> 안내 편집
+                      </button>
+                      <button onClick={() => handleDeleteEvent(ev.id)} title="삭제" style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', padding: '4px' }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
