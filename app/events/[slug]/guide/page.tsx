@@ -47,6 +47,11 @@ export default function GuidePage() {
         {/* 페이지 내용 */}
         <div className="glass-panel" style={{ flex: 1, padding: '32px', display: 'flex', flexDirection: 'column' }}>
           <h2 style={{ fontSize: '20px', marginBottom: '20px', color: 'var(--primary)' }}>{page.title || `${current + 1}페이지`}</h2>
+          {page.imageUrl && (
+            <div style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden', textAlign: 'center' }}>
+              <img src={page.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: '280px', objectFit: 'contain', borderRadius: '12px' }} />
+            </div>
+          )}
           <div style={{ flex: 1, fontSize: '16px', lineHeight: '1.8', whiteSpace: 'pre-wrap', color: 'var(--text)' }}>
             {page.content || '내용이 없습니다.'}
           </div>

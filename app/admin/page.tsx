@@ -21,7 +21,7 @@ export default function AdminPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [showNewEventForm, setShowNewEventForm] = useState(false);
   const [editingGuide, setEditingGuide] = useState<any | null>(null);
-  const [guidePages, setGuidePages] = useState<{title: string; content: string}[]>([]);
+  const [guidePages, setGuidePages] = useState<{title: string; content: string; imageUrl: string}[]>([]);
 
   // Submissions State
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -84,9 +84,21 @@ export default function AdminPage() {
 
   const openGuideEditor = (event: any) => {
     const pages = JSON.parse(event.guidePages || '[]');
-    const filled = [0, 1, 2].map(i => pages[i] || { title: '', content: '' });
+    const filled = [0, 1, 2].map(i => pages[i] || { title: '', content: '', imageUrl: '' });
     setGuidePages(filled);
     setEditingGuide(event);
+  };
+
+  const handleGuideImageUpload = async (index: number, file: File) => {
+    const fd = new FormData();
+    fd.append('files', file);
+    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+    if (res.ok) {
+      const { urls } = await res.json();
+      setGuidePages(prev => prev.map((p, i) => i === index ? { ...p, imageUrl: urls[0] } : p));
+    } else {
+      alert('이미지 업로드 실패');
+    }
   };
 
   const handleSaveGuide = async () => {
@@ -98,6 +110,21 @@ export default function AdminPage() {
     });
     if (res.ok) { await fetchEvents(); setEditingGuide(null); }
     else alert('저장 실패');
+  };
+
+  const handleBulkTag = async (ev: any) => {
+    if (!confirm(`"${ev.name}" 기간(${new Date(ev.startDate).toLocaleDateString('ko')} ~ ${new Date(ev.endDate).toLocaleDateString('ko')}) 안의 미태깅 게시물을 일괄 연결합니다.`)) return;
+    const res = await fetch(`/api/events/${ev.id}/bulk-tag`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (res.ok) {
+      const { updated } = await res.json();
+      alert(`${updated}건이 연결되었습니다.`);
+    } else {
+      alert('실패');
+    }
   };
 
   const fetchSettings = async () => {
@@ -357,6 +384,9 @@ export default function AdminPage() {
                       >
                         {ev.isActive ? '진행중 표시' : '표시 꺼짐'}
                       </button>
+                      <button onClick={() => handleBulkTag(ev)} title="기간 내 미태깅 게시물 일괄 연결" style={{ background: 'none', border: 'none', color: '#6c757d', cursor: 'pointer', padding: '4px', fontSize: '13px' }}>
+                        일괄 태깅
+                      </button>
                       <button onClick={() => openGuideEditor(ev)} title="안내 페이지 편집" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                         <BookOpen size={16} /> 안내 편집
                       </button>
@@ -389,7 +419,23 @@ export default function AdminPage() {
                 <textarea
                   className="form-control" placeholder="내용" rows={4} value={page.content}
                   onChange={e => setGuidePages(prev => prev.map((p, j) => j === i ? { ...p, content: e.target.value } : p))}
+                  style={{ marginBottom: '8px' }}
                 />
+                {page.imageUrl ? (
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <img src={page.imageUrl} alt="" style={{ maxHeight: '120px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} />
+                    <button
+                      type="button"
+                      onClick={() => setGuidePages(prev => prev.map((p, j) => j === i ? { ...p, imageUrl: '' } : p))}
+                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '22px', height: '22px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}
+                    >×</button>
+                  </div>
+                ) : (
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--primary)', cursor: 'pointer', padding: '6px 12px', border: '1px dashed var(--primary)', borderRadius: '8px' }}>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleGuideImageUpload(i, e.target.files[0])} />
+                    + 이미지 추가
+                  </label>
+                )}
               </div>
             ))}
             <div style={{ display: 'flex', gap: '12px' }}>
