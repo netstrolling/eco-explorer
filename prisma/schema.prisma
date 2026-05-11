@@ -8,6 +8,18 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
+model Event {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  startDate   DateTime
+  endDate     DateTime
+  guidePages  String       @default("[]")
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  submissions Submission[]
+}
+
 model Submission {
   id         String   @id @default(cuid())
   teamName   String
@@ -16,10 +28,13 @@ model Submission {
   category   String
   name       String
   memo       String?
-  mediaUrls  String   // JSON stringified array of URLs
+  mediaUrls  String
   isHidden   Boolean  @default(false)
   lat        Float?
   lng        Float?
+  uploaderIp String?
+  eventId    String?
+  event      Event?   @relation(fields: [eventId], references: [id])
   createdAt  DateTime @default(now())
 }
 

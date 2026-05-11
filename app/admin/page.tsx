@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Trash2, Edit2, EyeOff, Eye, X, Settings, Lock, Power } from 'lucide-react';
+import { Trash2, Edit2, EyeOff, Eye, X, Settings, Lock, Power, CalendarDays, Plus, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 
 const LOCATIONS = ['갯벌', '바다', '논', '밭', '숲', '기타'];
@@ -17,6 +17,12 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  // Events State
+  const [events, setEvents] = useState<any[]>([]);
+  const [showNewEventForm, setShowNewEventForm] = useState(false);
+  const [editingGuide, setEditingGuide] = useState<any | null>(null);
+  const [guidePages, setGuidePages] = useState<{title: string; content: string}[]>([]);
+
   // Submissions State
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
@@ -29,8 +35,61 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchSubmissions();
+      fetchEvents();
     }
   }, [isAuthenticated]);
+
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch('/api/events');
+      if (res.ok) setEvents(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const handleCreateEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const res = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: fd.get('name'), slug: fd.get('slug'),
+        startDate: fd.get('startDate'), endDate: fd.get('endDate'),
+        password,
+      }),
+    });
+    if (res.ok) { await fetchEvents(); setShowNewEventForm(false); }
+    else alert('행사 생성 실패');
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm('행사를 삭제하면 연결된 기록들의 행사 태그도 사라집니다. 계속하시겠습니까?')) return;
+    const res = await fetch(`/api/events/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (res.ok) fetchEvents();
+    else alert('삭제 실패');
+  };
+
+  const openGuideEditor = (event: any) => {
+    const pages = JSON.parse(event.guidePages || '[]');
+    const filled = [0, 1, 2].map(i => pages[i] || { title: '', content: '' });
+    setGuidePages(filled);
+    setEditingGuide(event);
+  };
+
+  const handleSaveGuide = async () => {
+    if (!editingGuide) return;
+    const res = await fetch(`/api/events/${editingGuide.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guidePages, password }),
+    });
+    if (res.ok) { await fetchEvents(); setEditingGuide(null); }
+    else alert('저장 실패');
+  };
 
   const fetchSettings = async () => {
     try {
@@ -223,7 +282,107 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* 2. 게시물 관리 대시보드 */}
+      {/* 2. 행사 관리 */}
+      <div className="glass-panel" style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <CalendarDays size={24} style={{ color: 'var(--primary)' }} />
+            <h2 style={{ fontSize: '20px', margin: 0 }}>행사 관리</h2>
+          </div>
+          <button className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', display: 'flex', gap: '6px', alignItems: 'center' }} onClick={() => setShowNewEventForm(true)}>
+            <Plus size={16} /> 새 행사
+          </button>
+        </div>
+
+        {showNewEventForm && (
+          <form onSubmit={handleCreateEvent} style={{ background: 'rgba(0,0,0,0.03)', borderRadius: '12px', padding: '16px', marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
+            <div style={{ flex: '1 1 160px' }}>
+              <label className="form-label" style={{ fontSize: '12px' }}>행사명</label>
+              <input name="name" className="form-control" required placeholder="우도 생태 탐사" />
+            </div>
+            <div style={{ flex: '1 1 140px' }}>
+              <label className="form-label" style={{ fontSize: '12px' }}>슬러그 (URL)</label>
+              <input name="slug" className="form-control" required placeholder="udo-2026-05" />
+            </div>
+            <div style={{ flex: '1 1 140px' }}>
+              <label className="form-label" style={{ fontSize: '12px' }}>시작일</label>
+              <input name="startDate" type="datetime-local" className="form-control" required />
+            </div>
+            <div style={{ flex: '1 1 140px' }}>
+              <label className="form-label" style={{ fontSize: '12px' }}>종료일</label>
+              <input name="endDate" type="datetime-local" className="form-control" required />
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="button" className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px' }} onClick={() => setShowNewEventForm(false)}>취소</button>
+              <button type="submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px' }}>생성</button>
+            </div>
+          </form>
+        )}
+
+        {events.length === 0 ? (
+          <div style={{ color: 'var(--text-muted)', fontSize: '14px', textAlign: 'center', padding: '16px' }}>등록된 행사가 없습니다.</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+            <thead>
+              <tr style={{ background: 'rgba(0,0,0,0.05)', textAlign: 'left' }}>
+                <th style={{ padding: '10px 12px' }}>행사명</th>
+                <th style={{ padding: '10px 12px' }}>기간</th>
+                <th style={{ padding: '10px 12px' }}>슬러그</th>
+                <th style={{ padding: '10px 12px', textAlign: 'center' }}>관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((ev: any) => (
+                <tr key={ev.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '10px 12px', fontWeight: 600 }}>{ev.name}</td>
+                  <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                    {new Date(ev.startDate).toLocaleDateString('ko')} ~ {new Date(ev.endDate).toLocaleDateString('ko')}
+                  </td>
+                  <td style={{ padding: '10px 12px', fontSize: '13px' }}>/events/{ev.slug}</td>
+                  <td style={{ padding: '10px 12px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                    <button onClick={() => openGuideEditor(ev)} title="안내 페이지 편집" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                      <BookOpen size={16} /> 안내 편집
+                    </button>
+                    <button onClick={() => handleDeleteEvent(ev.id)} title="삭제" style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', padding: '4px' }}>
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* 안내 페이지 편집 모달 */}
+      {editingGuide && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', background: 'white', position: 'relative', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }}>
+            <button onClick={() => setEditingGuide(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 style={{ marginBottom: '20px' }}>{editingGuide.name} — 안내 페이지</h2>
+            {guidePages.map((page, i) => (
+              <div key={i} style={{ marginBottom: '20px', padding: '16px', background: 'rgba(0,0,0,0.03)', borderRadius: '12px' }}>
+                <div style={{ fontWeight: 600, marginBottom: '10px', color: 'var(--primary)' }}>{i + 1}페이지</div>
+                <input
+                  className="form-control" placeholder="제목" value={page.title}
+                  onChange={e => setGuidePages(prev => prev.map((p, j) => j === i ? { ...p, title: e.target.value } : p))}
+                  style={{ marginBottom: '8px' }}
+                />
+                <textarea
+                  className="form-control" placeholder="내용" rows={4} value={page.content}
+                  onChange={e => setGuidePages(prev => prev.map((p, j) => j === i ? { ...p, content: e.target.value } : p))}
+                />
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-secondary" onClick={() => setEditingGuide(null)} style={{ flex: 1 }}>취소</button>
+              <button className="btn btn-primary" onClick={handleSaveGuide} style={{ flex: 1 }}>저장하기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. 게시물 관리 대시보드 */}
       <div className="glass-panel" style={{ width: '100%', flex: 1, margin: '0 auto', overflowX: 'auto', position: 'relative' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h1 style={{ margin: 0 }}>게시물 관리 대시보드</h1>

@@ -342,6 +342,9 @@ function GalleryContent() {
                     <div className="gallery-meta">
                       <span className="badge badge-category">{item.category}</span>
                       <span className="badge badge-location">{item.location}</span>
+                      {item.event && (
+                        <span className="badge" style={{ background: 'var(--primary)', color: 'white', fontSize: '11px' }}>{item.event.name}</span>
+                      )}
                     </div>
                     <div className="gallery-title">{item.name}</div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>

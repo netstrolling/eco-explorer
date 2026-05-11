@@ -13,7 +13,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3): P
   for (let i = 0; i < retries; i++) {
     try {
       const res = await fetch(url, options);
-      if (res.ok) return res;
+      if (res.ok || (res.status >= 400 && res.status < 500)) return res;
       if (i === retries - 1) throw new Error(`Request failed: ${res.status}`);
     } catch (err) {
       if (i === retries - 1) throw err;
@@ -241,12 +241,16 @@ export default function SubmitPage() {
         lng: gpsLng
       };
 
-      await fetchWithRetry('/api/submissions', {
+      const submitRes = await fetchWithRetry('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      
+      if (!submitRes.ok) {
+        const err = await submitRes.json().catch(() => ({}));
+        throw new Error(err.error || '업로드에 실패했습니다.');
+      }
+
       // Cleanup previews
       previewUrls.forEach(url => URL.revokeObjectURL(url));
       
@@ -256,7 +260,7 @@ export default function SubmitPage() {
       router.push('/gallery?success=true');
     } catch (error) {
       console.error(error);
-      alert('업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      alert(error instanceof Error ? error.message : '업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
     } finally {
       setIsSubmitting(false);
     }
