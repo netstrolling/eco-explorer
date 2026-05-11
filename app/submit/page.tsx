@@ -9,6 +9,43 @@ import exifr from 'exifr';
 const LOCATIONS = ['갯벌', '바다', '논', '밭', '숲', '기타'];
 const CATEGORIES = ['해양생물', '어류', '양서류', '파충류', '조류', '포유류', '곤충', '식물', '기타'];
 
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return res;
+      if (i === retries - 1) throw new Error(`Request failed: ${res.status}`);
+    } catch (err) {
+      if (i === retries - 1) throw err;
+    }
+    await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+  }
+  throw new Error('Unreachable');
+}
+
+async function compressImage(file: File, maxPx = 1200, quality = 0.8): Promise<File> {
+  if (!file.type.startsWith('image/')) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file),
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 export default function SubmitPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,11 +69,11 @@ export default function SubmitPage() {
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...selectedFiles].slice(0, 10)); // Max 10 files
-      
-      const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
-      setPreviewUrls(prev => [...prev, ...newPreviews].slice(0, 10));
+      const selectedFiles = Array.from(e.target.files).slice(0, 1);
+      setFiles(selectedFiles);
+
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
+      setPreviewUrls(selectedFiles.map(file => URL.createObjectURL(file)));
 
       const firstImage = selectedFiles.find(f => f.type.startsWith('image/'));
       if (firstImage) {
@@ -175,15 +212,11 @@ export default function SubmitPage() {
 
       // 1. Upload files first if any
       if (files.length > 0) {
+        const compressed = await Promise.all(files.map(f => compressImage(f)));
         const fileData = new FormData();
-        files.forEach(file => fileData.append('files', file));
+        compressed.forEach(file => fileData.append('files', file));
         
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: fileData
-        });
-        
-        if (!uploadRes.ok) throw new Error('File upload failed');
+        const uploadRes = await fetchWithRetry('/api/upload', { method: 'POST', body: fileData });
         const uploadResult = await uploadRes.json();
         mediaUrls = [...mediaUrls, ...uploadResult.urls];
       }
@@ -208,13 +241,11 @@ export default function SubmitPage() {
         lng: gpsLng
       };
 
-      const submitRes = await fetch('/api/submissions', {
+      await fetchWithRetry('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-
-      if (!submitRes.ok) throw new Error('Submission failed');
       
       // Cleanup previews
       previewUrls.forEach(url => URL.revokeObjectURL(url));
@@ -276,12 +307,11 @@ export default function SubmitPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">사진/영상 업로드 (최대 10장)</label>
+            <label className="form-label">사진 업로드 (1장)</label>
             <label className="file-upload-area" style={{ display: 'block' }}>
-              <input 
-                type="file" 
-                multiple 
-                accept="image/*,video/*" 
+              <input
+                type="file"
+                accept="image/*"
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
