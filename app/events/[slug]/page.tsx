@@ -4,18 +4,27 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Library, BookOpen, Camera, X, Search } from 'lucide-react';
+import { BookOpen, Camera, X, Search, Filter, Trophy, MapPin, Grid, ChevronDown, ChevronUp } from 'lucide-react';
 import Map from '../../components/Map';
+
+const LOCATIONS = ['전체', '갯벌', '바다', '논', '밭', '숲', '기타'];
+const CATEGORIES = ['전체', '해양생물', '어류', '양서류', '파충류', '조류', '포유류', '곤충', '식물', '기타'];
 
 export default function EventGalleryPage() {
   const params = useParams();
   const slug = params.slug as string;
 
   const [event, setEvent] = useState<any>(null);
+  const [allSubmissions, setAllSubmissions] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [availableLocs, setAvailableLocs] = useState<string[]>([]);
+  const [availableCats, setAvailableCats] = useState<string[]>([]);
+  const [selectedLocs, setSelectedLocs] = useState<string[]>([]);
+  const [selectedCats, setSelectedCats] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/events?slug=${slug}`)
@@ -23,20 +32,38 @@ export default function EventGalleryPage() {
       .then(async ev => {
         setEvent(ev);
         const res = await fetch(`/api/submissions?eventId=${ev.id}`);
-        if (res.ok) setSubmissions(await res.json());
+        if (res.ok) {
+          const data = await res.json();
+          setAllSubmissions(data);
+          setAvailableLocs(Array.from(new Set(data.map((s: any) => s.location))).filter(Boolean).sort() as string[]);
+          setAvailableCats(Array.from(new Set(data.map((s: any) => s.category))).filter(Boolean).sort() as string[]);
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [slug]);
 
   useEffect(() => {
-    if (selectedItem) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    let filtered = allSubmissions;
+    if (selectedLocs.length > 0) filtered = filtered.filter(s => selectedLocs.includes(s.location));
+    if (selectedCats.length > 0) filtered = filtered.filter(s => selectedCats.includes(s.category));
+    setSubmissions(filtered);
+  }, [allSubmissions, selectedLocs, selectedCats]);
+
+  useEffect(() => {
+    document.body.style.overflow = selectedItem ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [selectedItem]);
+
+  const toggleLoc = (loc: string) => {
+    if (loc === '전체') { setSelectedLocs(selectedLocs.length === availableLocs.length ? [] : availableLocs); return; }
+    setSelectedLocs(prev => prev.includes(loc) ? prev.filter(l => l !== loc) : [...prev, loc]);
+  };
+
+  const toggleCat = (cat: string) => {
+    if (cat === '전체') { setSelectedCats(selectedCats.length === availableCats.length ? [] : availableCats); return; }
+    setSelectedCats(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+  };
 
   if (loading) return <main className="wide-container"><div style={{ padding: '40px', textAlign: 'center' }}>불러오는 중...</div></main>;
   if (!event) return <main className="wide-container"><div style={{ padding: '40px', textAlign: 'center' }}>행사를 찾을 수 없습니다.</div></main>;
@@ -46,33 +73,80 @@ export default function EventGalleryPage() {
       <div className="animate-fade-in-up">
 
         {/* 행사 헤더 */}
-        <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+        <div className="glass-panel" style={{ padding: '20px 24px', marginBottom: '24px', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>
             {new Date(event.startDate).toLocaleDateString('ko')} ~ {new Date(event.endDate).toLocaleDateString('ko')}
           </div>
-          <h1 style={{ fontSize: '26px', margin: '0 0 16px 0', color: 'var(--primary)' }}>{event.name}</h1>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href={`/events/${slug}/guide`} className="btn btn-secondary" style={{ width: 'auto', padding: '8px 18px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <BookOpen size={16} /> 안내 보기
+          <h1 style={{ fontSize: '24px', margin: '0 0 14px 0', color: 'var(--primary)' }}>{event.name}</h1>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href={`/events/${slug}/guide`} className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <BookOpen size={15} /> 안내 보기
             </Link>
-            <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 18px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Camera size={16} /> 기록하기
-            </Link>
-            <Link href="/gallery" className="btn btn-secondary" style={{ width: 'auto', padding: '8px 18px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Library size={16} /> 전체 도감
+            <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Camera size={15} /> 기록하기
             </Link>
           </div>
         </div>
 
-        {/* 보기 모드 + 통계 */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
-            총 <strong style={{ color: 'var(--primary)' }}>{submissions.length}</strong>건 기록
-          </div>
+        {/* 상단 바: 보기모드 + 랭킹 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', background: 'rgba(0,0,0,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid rgba(0,0,0,0.05)' }}>
-            <button onClick={() => setViewMode('grid')} style={{ padding: '6px 14px', background: viewMode === 'grid' ? 'var(--primary)' : 'transparent', color: viewMode === 'grid' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>그리드</button>
-            <button onClick={() => setViewMode('map')} style={{ padding: '6px 14px', background: viewMode === 'map' ? 'var(--primary)' : 'transparent', color: viewMode === 'map' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>지도</button>
+            <button onClick={() => setViewMode('grid')} title="그리드 보기" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'grid' ? 'var(--primary)' : 'transparent', color: viewMode === 'grid' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', height: '36px' }}>
+              <Grid size={18} />
+            </button>
+            <button onClick={() => setViewMode('map')} title="지도 보기" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'map' ? 'var(--primary)' : 'transparent', color: viewMode === 'map' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', height: '36px' }}>
+              <MapPin size={18} />
+            </button>
           </div>
+          <Link href="/ranking" className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', background: 'var(--primary-light)', color: 'white', border: 'none', height: '36px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Trophy size={16} /> 랭킹
+          </Link>
+        </div>
+
+        {/* 필터 패널 */}
+        <div className="glass-panel" style={{ padding: '20px 24px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }} onClick={() => setIsFilterOpen(!isFilterOpen)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', fontWeight: 600, fontSize: '15px' }}>
+              <Filter size={18} /> 생물 종류 및 장소
+              {((selectedLocs.length > 0 && selectedLocs.length !== availableLocs.length) || (selectedCats.length > 0 && selectedCats.length !== availableCats.length)) && (
+                <span style={{ fontSize: '12px', background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '12px' }}>적용 중</span>
+              )}
+            </div>
+            {isFilterOpen ? <ChevronUp size={20} color="var(--primary)" /> : <ChevronDown size={20} color="var(--primary)" />}
+          </div>
+
+          {isFilterOpen && (
+            <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.05)' }} className="animate-fade-in-up">
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--primary)', fontWeight: 600, fontSize: '14px' }}>장소 (중복 선택)</div>
+                <div className="filter-chips">
+                  <button onClick={() => toggleLoc('전체')} className={`chip ${selectedLocs.length === availableLocs.length && availableLocs.length > 0 ? 'active' : ''}`}>전체 ({allSubmissions.length})</button>
+                  {LOCATIONS.filter(l => l !== '전체').map(loc => {
+                    const count = allSubmissions.filter(s => s.location === loc).length;
+                    return (
+                      <button key={loc} onClick={() => count > 0 && toggleLoc(loc)} className={`chip ${selectedLocs.includes(loc) ? 'active' : ''}`} style={{ opacity: count === 0 ? 0.4 : 1, cursor: count === 0 ? 'default' : 'pointer' }}>
+                        {loc}{count > 0 ? ` (${count})` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--primary)', fontWeight: 600, fontSize: '14px' }}>종류 (중복 선택)</div>
+                <div className="filter-chips">
+                  <button onClick={() => toggleCat('전체')} className={`chip ${selectedCats.length === availableCats.length && availableCats.length > 0 ? 'active' : ''}`}>전체 ({allSubmissions.length})</button>
+                  {CATEGORIES.filter(c => c !== '전체').map(cat => {
+                    const count = allSubmissions.filter(s => s.category === cat).length;
+                    return (
+                      <button key={cat} onClick={() => count > 0 && toggleCat(cat)} className={`chip ${selectedCats.includes(cat) ? 'active' : ''}`} style={{ opacity: count === 0 ? 0.4 : 1, cursor: count === 0 ? 'default' : 'pointer' }}>
+                        {cat}{count > 0 ? ` (${count})` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {submissions.length === 0 ? (
