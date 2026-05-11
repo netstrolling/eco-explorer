@@ -10,7 +10,7 @@ export default function GuidePage() {
   const slug = params.slug as string;
 
   const [event, setEvent] = useState<any>(null);
-  const [pages, setPages] = useState<{ title: string; content: string }[]>([]);
+  const [pages, setPages] = useState<{ title: string; content: string; imageUrl?: string }[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
 
