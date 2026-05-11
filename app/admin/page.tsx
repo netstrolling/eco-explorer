@@ -22,6 +22,8 @@ export default function AdminPage() {
   const [showNewEventForm, setShowNewEventForm] = useState(false);
   const [editingGuide, setEditingGuide] = useState<any | null>(null);
   const [guidePages, setGuidePages] = useState<{title: string; content: string; imageUrl: string}[]>([]);
+  const [taggingEvent, setTaggingEvent] = useState<any | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Submissions State
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -112,18 +114,31 @@ export default function AdminPage() {
     else alert('저장 실패');
   };
 
-  const handleBulkTag = async (ev: any) => {
-    if (!confirm(`"${ev.name}" 기간(${new Date(ev.startDate).toLocaleDateString('ko')} ~ ${new Date(ev.endDate).toLocaleDateString('ko')}) 안의 미태깅 게시물을 일괄 연결합니다.`)) return;
-    const res = await fetch(`/api/events/${ev.id}/bulk-tag`, {
+  const openTagging = (ev: any) => {
+    setSelectedIds(new Set(submissions.filter(s => s.eventId === ev.id).map((s: any) => s.id)));
+    setTaggingEvent(ev);
+  };
+
+  const toggleId = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleTagSubmissions = async () => {
+    if (!taggingEvent) return;
+    const res = await fetch(`/api/events/${taggingEvent.id}/tag-submissions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ submissionIds: Array.from(selectedIds), password }),
     });
     if (res.ok) {
-      const { updated } = await res.json();
-      alert(`${updated}건이 연결되었습니다.`);
+      await fetchSubmissions();
+      setTaggingEvent(null);
     } else {
-      alert('실패');
+      alert('저장 실패');
     }
   };
 
@@ -384,8 +399,8 @@ export default function AdminPage() {
                       >
                         {ev.isActive ? '진행중 표시' : '표시 꺼짐'}
                       </button>
-                      <button onClick={() => handleBulkTag(ev)} title="기간 내 미태깅 게시물 일괄 연결" style={{ background: 'none', border: 'none', color: '#6c757d', cursor: 'pointer', padding: '4px', fontSize: '13px' }}>
-                        일괄 태깅
+                      <button onClick={() => openTagging(ev)} style={{ background: 'none', border: 'none', color: '#6c757d', cursor: 'pointer', padding: '4px', fontSize: '13px' }}>
+                        게시물 태깅
                       </button>
                       <button onClick={() => openGuideEditor(ev)} title="안내 페이지 편집" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                         <BookOpen size={16} /> 안내 편집
@@ -441,6 +456,52 @@ export default function AdminPage() {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button className="btn btn-secondary" onClick={() => setEditingGuide(null)} style={{ flex: 1 }}>취소</button>
               <button className="btn btn-primary" onClick={handleSaveGuide} style={{ flex: 1 }}>저장하기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 게시물 태깅 모달 */}
+      {taggingEvent && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '560px', background: 'white', position: 'relative', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>{taggingEvent.name}</h2>
+                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>태깅할 게시물을 선택하세요</div>
+              </div>
+              <button onClick={() => setTaggingEvent(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={22} /></button>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
+              {submissions.map((s: any) => {
+                const checked = selectedIds.has(s.id);
+                return (
+                  <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 24px', cursor: 'pointer', background: checked ? 'rgba(13,110,253,0.05)' : 'transparent', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleId(s.id)} style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600, fontSize: '14px' }}>{s.name}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{s.teamName}</span>
+                        {s.event && (
+                          <span style={{ fontSize: '11px', background: 'var(--primary)', color: 'white', padding: '1px 7px', borderRadius: '10px' }}>{s.event.name}</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        {format(new Date(s.dateTime), 'yyyy.MM.dd')} · {s.category} · {s.location}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{selectedIds.size}건 선택됨</span>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="btn btn-secondary" onClick={() => setTaggingEvent(null)} style={{ width: 'auto', padding: '8px 16px' }}>취소</button>
+                <button className="btn btn-primary" onClick={handleTagSubmissions} style={{ width: 'auto', padding: '8px 16px' }}>저장하기</button>
+              </div>
             </div>
           </div>
         </div>
