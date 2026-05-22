@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Trophy, ChevronLeft, Award, Crown, X } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -42,6 +43,7 @@ export default function RankingClient({
   submissions: any[];
   events: EventData[];
 }) {
+  const router = useRouter();
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   // 기본 선택 행사: 진행중 행사 → 없으면 가장 최근 행사 → 없으면 전체
@@ -110,7 +112,17 @@ export default function RankingClient({
   });
 
   return (
-    <main className="wide-container" style={{ paddingBottom: '80px' }}>
+    <main className="wide-container" style={{ paddingBottom: '80px', position: 'relative' }}>
+      {/* 닫기 버튼: 이전 페이지로 돌아가기 */}
+      <button
+        onClick={() => router.back()}
+        title="닫기"
+        aria-label="닫기"
+        style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 100, background: 'white', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+      >
+        <X size={22} color="var(--text-muted)" />
+      </button>
+
       <div className="animate-fade-in-up">
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px', position: 'relative' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)', textDecoration: 'none' }}>
