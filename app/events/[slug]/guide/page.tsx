@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Library, Camera } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Library, Camera, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -36,7 +36,17 @@ export default function GuidePage() {
   const isLast = current === pages.length - 1;
 
   return (
-    <main className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
+    <main className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', position: 'relative' }}>
+      {/* 닫기 버튼: 원래 보던 페이지로 돌아가기 */}
+      <button
+        onClick={() => router.back()}
+        title="닫기"
+        aria-label="닫기"
+        style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 100, background: 'white', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+      >
+        <X size={22} color="var(--text-muted)" />
+      </button>
+
       <div className="animate-fade-in-up" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* 행사명 */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -50,8 +60,8 @@ export default function GuidePage() {
         <div className="glass-panel" style={{ flex: 1, padding: '32px', display: 'flex', flexDirection: 'column' }}>
           <h2 style={{ fontSize: '20px', marginBottom: '20px', color: 'var(--primary)' }}>{page.title || `${current + 1}페이지`}</h2>
           {page.imageUrl && (
-            <div style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden', textAlign: 'center' }}>
-              <img src={page.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: '280px', objectFit: 'contain', borderRadius: '12px' }} />
+            <div style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden' }}>
+              <img src={page.imageUrl} alt="" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '12px' }} />
             </div>
           )}
           <div className="markdown-body" style={{ flex: 1, fontSize: '16px', lineHeight: '1.8', color: 'var(--text)' }}>
