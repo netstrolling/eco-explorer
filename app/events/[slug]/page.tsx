@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { BookOpen, Camera, X, Search, Filter, Trophy, MapPin, Grid, ChevronDown, ChevronUp } from 'lucide-react';
+import { BookOpen, Camera, X, Search, Filter, Trophy, MapPin, Grid, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import Map from '../../components/Map';
 
 const LOCATIONS = ['전체', '갯벌', '바다', '논', '밭', '숲', '기타'];
@@ -19,7 +19,8 @@ export default function EventGalleryPage() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'group' | 'map'>('grid');
   const [availableLocs, setAvailableLocs] = useState<string[]>([]);
   const [availableCats, setAvailableCats] = useState<string[]>([]);
   const [selectedLocs, setSelectedLocs] = useState<string[]>([]);
@@ -51,9 +52,12 @@ export default function EventGalleryPage() {
   }, [allSubmissions, selectedLocs, selectedCats]);
 
   useEffect(() => {
-    document.body.style.overflow = selectedItem ? 'hidden' : '';
+    document.body.style.overflow = (selectedItem || selectedGroup) ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [selectedItem]);
+  }, [selectedItem, selectedGroup]);
+
+  // 현재 필터 기준 기록된 종 수 (이름 기준 고유 개수)
+  const speciesCount = Array.from(new Set(submissions.map(s => s.name))).filter(Boolean).length;
 
   const toggleLoc = (loc: string) => {
     if (loc === '전체') { setSelectedLocs(selectedLocs.length === availableLocs.length ? [] : availableLocs); return; }
@@ -77,7 +81,18 @@ export default function EventGalleryPage() {
           <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>
             {new Date(event.startDate).toLocaleDateString('ko')} ~ {new Date(event.endDate).toLocaleDateString('ko')}
           </div>
-          <h1 style={{ fontSize: '24px', margin: '0 0 14px 0', color: 'var(--primary)' }}>{event.name}</h1>
+          <h1 style={{ fontSize: '24px', margin: '0 0 12px 0', color: 'var(--primary)' }}>{event.name}</h1>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--primary)', lineHeight: 1 }}>{speciesCount}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>기록된 종</span>
+            </div>
+            <div style={{ width: '1px', background: 'rgba(0,0,0,0.08)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--primary)', lineHeight: 1 }}>{submissions.length}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>전체 기록</span>
+            </div>
+          </div>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href={`/events/${slug}/guide`} className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <BookOpen size={15} /> 안내 보기
@@ -93,6 +108,9 @@ export default function EventGalleryPage() {
           <div style={{ display: 'flex', background: 'rgba(0,0,0,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid rgba(0,0,0,0.05)' }}>
             <button onClick={() => setViewMode('grid')} title="그리드 보기" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'grid' ? 'var(--primary)' : 'transparent', color: viewMode === 'grid' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', height: '36px' }}>
               <Grid size={18} />
+            </button>
+            <button onClick={() => setViewMode('group')} title="종별 모아보기" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'group' ? 'var(--primary)' : 'transparent', color: viewMode === 'group' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', height: '36px' }}>
+              <Layers size={18} />
             </button>
             <button onClick={() => setViewMode('map')} title="지도 보기" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'map' ? 'var(--primary)' : 'transparent', color: viewMode === 'map' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '8px', cursor: 'pointer', height: '36px' }}>
               <MapPin size={18} />
@@ -156,6 +174,42 @@ export default function EventGalleryPage() {
           </div>
         ) : viewMode === 'map' ? (
           <Map submissions={submissions} />
+        ) : viewMode === 'group' ? (
+          <div className="gallery-grid-square">
+            {(Object.entries(
+              submissions.reduce((acc, curr) => {
+                if (!acc[curr.name]) acc[curr.name] = [];
+                acc[curr.name].push(curr);
+                return acc;
+              }, {} as Record<string, any[]>)
+            ) as [string, any[]][]).sort((a, b) => b[1].length - a[1].length).map(([name, subs]) => {
+              const mainSub = subs[0];
+              const urls = JSON.parse(mainSub.mediaUrls || '[]');
+              const mainImg = urls.length > 0 ? urls[0] : null;
+              const isWiki = mainImg && (mainImg.includes('wikimedia.org') || mainImg.includes('wikipedia.org'));
+              return (
+                <div key={name} className="gallery-card" onClick={() => setSelectedGroup(name)} style={{ cursor: 'pointer' }}>
+                  <div className="gallery-image-container" style={isWiki ? { padding: '12px 12px 36px 12px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)', position: 'relative' } : {}}>
+                    {mainImg ? (
+                      <img src={mainImg} alt={name} loading="lazy" style={isWiki ? { borderRadius: '4px', border: '1px solid rgba(0,0,0,0.05)' } : {}} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>이미지 없음</div>
+                    )}
+                    {isWiki && <div style={{ position: 'absolute', bottom: '10px', right: '14px', fontSize: '11px', color: '#999', fontWeight: 500 }}>사진: 위키백과</div>}
+                  </div>
+                  <div className="gallery-info">
+                    <div className="gallery-meta">
+                      <span className="badge badge-category">{mainSub.category}</span>
+                    </div>
+                    <div className="gallery-title">{name}</div>
+                    <div style={{ marginTop: '8px' }}>
+                      <span className="badge" style={{ background: 'var(--primary)', color: 'white' }}>{subs.length}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className="gallery-grid-square">
             {submissions.map(item => {
@@ -212,6 +266,51 @@ export default function EventGalleryPage() {
               </div>
               <div style={{ background: 'rgba(0,0,0,0.03)', padding: '16px', borderRadius: '12px', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '15px' }}>
                 {selectedItem.memo || '작성된 메모가 없습니다.'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 종별 모아보기 상세 모달 */}
+      {selectedGroup && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 1000, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }} onClick={() => setSelectedGroup(null)}>
+          <div style={{ minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div className="glass-panel animate-fade-in-up" style={{ maxWidth: '900px', width: '100%', position: 'relative', padding: '32px', background: 'var(--bg-color)' }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setSelectedGroup(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'var(--primary-light)', color: 'white', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
+                <X size={20} />
+              </button>
+              <div style={{ marginBottom: '24px', textAlign: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '24px' }}>
+                <h2 style={{ fontSize: '32px', color: 'var(--primary)', marginBottom: '8px' }}>{selectedGroup}</h2>
+                <div style={{ color: 'var(--text-muted)' }}>
+                  총 {submissions.filter(s => s.name === selectedGroup).length}번 기록되었습니다
+                </div>
+              </div>
+              <div className="gallery-masonry" style={{ marginTop: '24px' }}>
+                {submissions.filter(s => s.name === selectedGroup).map(item => {
+                  const urls = JSON.parse(item.mediaUrls || '[]');
+                  const mainImg = urls.length > 0 ? urls[0] : null;
+                  const isWiki = mainImg && (mainImg.includes('wikimedia.org') || mainImg.includes('wikipedia.org'));
+                  return (
+                    <div key={item.id} className="gallery-card" onClick={() => setSelectedItem(item)} style={{ cursor: 'pointer' }}>
+                      <div className="gallery-image-container" style={isWiki ? { padding: '12px 12px 36px 12px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.05)', position: 'relative' } : {}}>
+                        {mainImg ? (
+                          <img src={mainImg} alt={item.name} loading="lazy" style={isWiki ? { borderRadius: '4px', border: '1px solid rgba(0,0,0,0.05)' } : {}} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', background: '#f8f9fa' }}>이미지 없음</div>
+                        )}
+                        {isWiki && <div style={{ position: 'absolute', bottom: '10px', right: '14px', fontSize: '11px', color: '#999', fontWeight: 500 }}>사진: 위키백과</div>}
+                      </div>
+                      <div className="gallery-info" style={{ padding: '12px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>{item.teamName}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{item.location}</span>
+                          <span>{format(new Date(item.dateTime), 'MM/dd')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
