@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Library, Camera } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function GuidePage() {
   const params = useParams();
@@ -52,8 +54,36 @@ export default function GuidePage() {
               <img src={page.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: '280px', objectFit: 'contain', borderRadius: '12px' }} />
             </div>
           )}
-          <div style={{ flex: 1, fontSize: '16px', lineHeight: '1.8', whiteSpace: 'pre-wrap', color: 'var(--text)' }}>
-            {page.content || '내용이 없습니다.'}
+          <div className="markdown-body" style={{ flex: 1, fontSize: '16px', lineHeight: '1.8', color: 'var(--text)' }}>
+            <style dangerouslySetInnerHTML={{ __html: `
+              .markdown-body > *:first-child { margin-top: 0; }
+              .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: var(--primary); line-height: 1.3; margin: 1.2em 0 0.5em; }
+              .markdown-body h1 { font-size: 1.5em; }
+              .markdown-body h2 { font-size: 1.3em; }
+              .markdown-body h3 { font-size: 1.1em; }
+              .markdown-body p { margin: 0 0 1em; }
+              .markdown-body ul, .markdown-body ol { margin: 0 0 1em; padding-left: 1.4em; }
+              .markdown-body li { margin: 0.25em 0; }
+              .markdown-body a { color: var(--primary); text-decoration: underline; }
+              .markdown-body img { max-width: 100%; border-radius: 12px; }
+              .markdown-body blockquote { margin: 0 0 1em; padding: 8px 16px; border-left: 4px solid var(--primary); background: rgba(0,0,0,0.03); border-radius: 0 8px 8px 0; color: var(--text-muted); }
+              .markdown-body code { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+              .markdown-body pre { background: rgba(0,0,0,0.06); padding: 12px; border-radius: 8px; overflow-x: auto; }
+              .markdown-body pre code { background: none; padding: 0; }
+              .markdown-body table { border-collapse: collapse; width: 100%; margin: 0 0 1em; }
+              .markdown-body th, .markdown-body td { border: 1px solid rgba(0,0,0,0.1); padding: 6px 10px; text-align: left; }
+              .markdown-body hr { border: none; border-top: 1px solid rgba(0,0,0,0.1); margin: 1.5em 0; }
+            ` }} />
+            {page.content ? (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+                }}
+              >
+                {page.content}
+              </ReactMarkdown>
+            ) : '내용이 없습니다.'}
           </div>
         </div>
 

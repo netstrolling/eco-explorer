@@ -447,7 +447,10 @@ export default function AdminPage() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', background: 'white', position: 'relative', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }}>
             <button onClick={() => setEditingGuide(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
-            <h2 style={{ marginBottom: '20px' }}>{editingGuide.name} — 안내 페이지</h2>
+            <h2 style={{ marginBottom: '6px' }}>{editingGuide.name} — 안내 페이지</h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.6 }}>
+              내용에는 <b>마크다운</b>을 쓸 수 있어요. 예: <code># 큰제목</code>, <code>## 소제목</code>, <code>**굵게**</code>, <code>- 목록</code>, <code>[링크](주소)</code>, <code>&gt; 인용</code>
+            </p>
             {guidePages.map((page, i) => (
               <div key={i} style={{ marginBottom: '20px', padding: '16px', background: 'rgba(0,0,0,0.03)', borderRadius: '12px' }}>
                 <div style={{ fontWeight: 600, marginBottom: '10px', color: 'var(--primary)' }}>{i + 1}페이지</div>
