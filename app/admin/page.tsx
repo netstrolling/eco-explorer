@@ -227,7 +227,11 @@ export default function AdminPage() {
     if (!confirm('정말 영구적으로 삭제하시겠습니까? (이 작업은 되돌릴 수 없습니다)')) return;
     
     try {
-      const res = await fetch(`/api/submissions/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/submissions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
       if (res.ok) {
         setSubmissions(prev => prev.filter(s => s.id !== id));
       }
@@ -240,10 +244,10 @@ export default function AdminPage() {
   const handleToggleHide = async (item: any) => {
     try {
       const newStatus = !item.isHidden;
-      const res = await fetch(`/api/submissions/${item.id}`, { 
+      const res = await fetch(`/api/submissions/${item.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isHidden: newStatus })
+        body: JSON.stringify({ isHidden: newStatus, password })
       });
       if (res.ok) {
         setSubmissions(prev => prev.map(s => s.id === item.id ? { ...s, isHidden: newStatus } : s));
@@ -265,6 +269,7 @@ export default function AdminPage() {
       category: formData.get('category'),
       name: formData.get('name'),
       memo: formData.get('memo'),
+      password,
     };
 
     try {

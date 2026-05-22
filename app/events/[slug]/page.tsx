@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { BookOpen, Camera, X, Search, Filter, Trophy, MapPin, Grid, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import Map from '../../components/Map';
 import LikeButton from '../../components/LikeButton';
+import OwnerControls from '../../components/OwnerControls';
 import { getVoterId } from '@/lib/voter';
 
 const LOCATIONS = ['전체', '갯벌', '바다', '논', '밭', '숲', '기타'];
@@ -273,6 +274,19 @@ export default function EventGalleryPage() {
               <div style={{ background: 'rgba(0,0,0,0.03)', padding: '16px', borderRadius: '12px', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '15px' }}>
                 {selectedItem.memo || '작성된 메모가 없습니다.'}
               </div>
+
+              <OwnerControls
+                submission={selectedItem}
+                onChanged={() => {
+                  setSelectedItem(null);
+                  if (event) {
+                    fetch(`/api/submissions?eventId=${event.id}&voterId=${encodeURIComponent(getVoterId())}`)
+                      .then(r => r.json())
+                      .then(setAllSubmissions)
+                      .catch(() => {});
+                  }
+                }}
+              />
             </div>
           </div>
         </div>

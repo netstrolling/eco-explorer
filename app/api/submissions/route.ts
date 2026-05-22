@@ -29,6 +29,9 @@ export async function POST(request: Request) {
       }
     }
 
+    // 본인 수정/삭제 권한 증명용 비밀 토큰 (로그인 없이 작성자 식별)
+    const editToken = crypto.randomUUID();
+
     const submission = await prisma.submission.create({
       data: {
         teamName,
@@ -42,6 +45,7 @@ export async function POST(request: Request) {
         lng: lng || null,
         uploaderIp: ip,
         eventId: activeEvent?.id || null,
+        editToken,
       }
     });
 
@@ -85,7 +89,8 @@ export async function GET(request: Request) {
     });
 
     const result = submissions.map((s: any) => {
-      const { _count, likes, ...rest } = s;
+      // editToken(작성자 비밀값)과 uploaderIp는 외부로 노출하지 않는다
+      const { _count, likes, editToken, uploaderIp, ...rest } = s;
       return {
         ...rest,
         likeCount: _count?.likes ?? 0,

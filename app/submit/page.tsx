@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Camera, Upload, X, Check, Loader2, Sparkles, ChevronLeft } from 'lucide-react';
 import exifr from 'exifr';
+import { addMyPost } from '@/lib/myposts';
 
 const LOCATIONS = ['갯벌', '바다', '논', '밭', '숲', '기타'];
 const CATEGORIES = ['해양생물', '어류', '양서류', '파충류', '조류', '포유류', '곤충', '식물', '기타'];
@@ -250,6 +251,14 @@ export default function SubmitPage() {
         const err = await submitRes.json().catch(() => ({}));
         throw new Error(err.error || '업로드에 실패했습니다.');
       }
+
+      // 본인 수정/삭제를 위해 이 기기에 글 소유 정보 저장
+      try {
+        const created = await submitRes.json();
+        if (created?.id && created?.editToken) {
+          addMyPost(created.id, created.editToken);
+        }
+      } catch { /* 무시: 저장 실패해도 등록 자체는 성공 */ }
 
       // Cleanup previews
       previewUrls.forEach(url => URL.revokeObjectURL(url));

@@ -34,6 +34,7 @@ model Submission {
   lat        Float?
   lng        Float?
   uploaderIp String?
+  editToken  String?
   eventId    String?
   event      Event?   @relation(fields: [eventId], references: [id])
   likes      Like[]

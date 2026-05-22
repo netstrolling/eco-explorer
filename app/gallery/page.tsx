@@ -7,6 +7,7 @@ import { Library, Filter, Search, MapPin, Grid, X, Trophy, ChevronDown, ChevronU
 import { format } from 'date-fns';
 import Map from '../components/Map';
 import LikeButton from '../components/LikeButton';
+import OwnerControls from '../components/OwnerControls';
 import { getVoterId } from '@/lib/voter';
 
 const LOCATIONS = ['전체', '갯벌', '바다', '논', '밭', '숲', '기타'];
@@ -428,6 +429,11 @@ function GalleryContent() {
               <div style={{ background: 'rgba(0,0,0,0.03)', padding: '16px', borderRadius: '12px', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '15px' }}>
                 {selectedItem.memo || "작성된 메모가 없습니다."}
               </div>
+
+              <OwnerControls
+                submission={selectedItem}
+                onChanged={() => { setSelectedItem(null); fetchAllSubmissions(); }}
+              />
             </div>
           </div>
         </div>
