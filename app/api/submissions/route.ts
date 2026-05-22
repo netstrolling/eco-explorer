@@ -58,6 +58,7 @@ export async function GET(request: Request) {
   const category = searchParams.get('category');
   const admin = searchParams.get('admin');
   const eventId = searchParams.get('eventId');
+  const voterId = searchParams.get('voterId');
 
   const where: Record<string, unknown> = {};
   if (location && location !== 'all') {
@@ -75,9 +76,23 @@ export async function GET(request: Request) {
     const submissions = await prisma.submission.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { event: { select: { name: true, slug: true } } },
+      include: {
+        event: { select: { name: true, slug: true } },
+        _count: { select: { likes: true } },
+        // voterId가 있으면 내가 누른 좋아요만 함께 조회해 likedByMe 계산
+        ...(voterId ? { likes: { where: { voterId }, select: { id: true } } } : {}),
+      },
     });
-    return NextResponse.json(submissions);
+
+    const result = submissions.map((s: any) => {
+      const { _count, likes, ...rest } = s;
+      return {
+        ...rest,
+        likeCount: _count?.likes ?? 0,
+        likedByMe: voterId ? (likes?.length ?? 0) > 0 : false,
+      };
+    });
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

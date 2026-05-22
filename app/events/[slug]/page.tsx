@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { BookOpen, Camera, X, Search, Filter, Trophy, MapPin, Grid, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import Map from '../../components/Map';
+import LikeButton from '../../components/LikeButton';
+import { getVoterId } from '@/lib/voter';
 
 const LOCATIONS = ['전체', '갯벌', '바다', '논', '밭', '숲', '기타'];
 const CATEGORIES = ['전체', '해양생물', '어류', '양서류', '파충류', '조류', '포유류', '곤충', '식물', '기타'];
@@ -32,7 +34,7 @@ export default function EventGalleryPage() {
       .then(r => r.json())
       .then(async ev => {
         setEvent(ev);
-        const res = await fetch(`/api/submissions?eventId=${ev.id}`);
+        const res = await fetch(`/api/submissions?eventId=${ev.id}&voterId=${encodeURIComponent(getVoterId())}`);
         if (res.ok) {
           const data = await res.json();
           setAllSubmissions(data);
@@ -236,6 +238,9 @@ export default function EventGalleryPage() {
                       <span>{item.teamName}</span>
                       <span>{format(new Date(item.dateTime), 'MM/dd')}</span>
                     </div>
+                    <div style={{ marginTop: '6px' }}>
+                      <LikeButton submissionId={item.id} initialCount={item.likeCount ?? 0} initialLiked={item.likedByMe ?? false} />
+                    </div>
                   </div>
                 </div>
               );
@@ -259,7 +264,8 @@ export default function EventGalleryPage() {
                   <h2 style={{ marginBottom: '4px', color: 'var(--primary)' }}>{selectedItem.name}</h2>
                   <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{selectedItem.teamName} · {format(new Date(selectedItem.dateTime), 'yyyy년 MM월 dd일 HH:mm')}</div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <LikeButton submissionId={selectedItem.id} initialCount={selectedItem.likeCount ?? 0} initialLiked={selectedItem.likedByMe ?? false} variant="modal" />
                   <span className="badge badge-location">{selectedItem.location}</span>
                   <span className="badge badge-category">{selectedItem.category}</span>
                 </div>
@@ -306,6 +312,9 @@ export default function EventGalleryPage() {
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                           <span>{item.location}</span>
                           <span>{format(new Date(item.dateTime), 'MM/dd')}</span>
+                        </div>
+                        <div style={{ marginTop: '6px' }}>
+                          <LikeButton submissionId={item.id} initialCount={item.likeCount ?? 0} initialLiked={item.likedByMe ?? false} />
                         </div>
                       </div>
                     </div>

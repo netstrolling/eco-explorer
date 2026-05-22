@@ -36,7 +36,18 @@ model Submission {
   uploaderIp String?
   eventId    String?
   event      Event?   @relation(fields: [eventId], references: [id])
+  likes      Like[]
   createdAt  DateTime @default(now())
+}
+
+model Like {
+  id           String     @id @default(cuid())
+  submissionId String
+  voterId      String
+  createdAt    DateTime   @default(now())
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, voterId])
 }
 
 model SystemSetting {
