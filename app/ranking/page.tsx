@@ -7,25 +7,30 @@ export default async function RankingPage() {
   // 숨김 처리되지 않은 모든 사진 데이터를 가져옵니다 (최신순)
   const submissions = await prisma.submission.findMany({
     where: { isHidden: false },
-    orderBy: { dateTime: 'desc' }
+    orderBy: { dateTime: 'desc' },
   });
 
-  // 팀명으로 사진들을 그룹화합니다
-  const teamMap = new Map<string, any[]>();
-  submissions.forEach(sub => {
-    if (!sub.teamName || sub.teamName.trim() === '') return;
-    if (!teamMap.has(sub.teamName)) {
-      teamMap.set(sub.teamName, []);
-    }
-    teamMap.get(sub.teamName)!.push(sub);
+  // 행사 목록 (기간/phase 정보 포함)
+  const events = await prisma.event.findMany({
+    orderBy: { startDate: 'desc' },
   });
 
-  // 배열 형태로 변환하고 개수 순으로 내림차순 정렬합니다
-  const rankings = Array.from(teamMap.entries()).map(([teamName, subs]) => ({
-    teamName,
-    count: subs.length,
-    submissions: subs,
-  })).sort((a, b) => b.count - a.count);
+  // 클라이언트로 넘길 형태로 직렬화 (Date -> ISO 문자열)
+  const submissionsData = submissions.map(s => ({
+    ...s,
+    dateTime: s.dateTime.toISOString(),
+    createdAt: s.createdAt.toISOString(),
+  }));
 
-  return <RankingClient rankings={rankings} />;
+  const eventsData = events.map(e => ({
+    id: e.id,
+    name: e.name,
+    slug: e.slug,
+    isActive: e.isActive,
+    startDate: e.startDate.toISOString(),
+    endDate: e.endDate.toISOString(),
+    phases: e.phases,
+  }));
+
+  return <RankingClient submissions={submissionsData} events={eventsData} />;
 }

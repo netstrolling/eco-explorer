@@ -15,6 +15,7 @@ model Event {
   startDate   DateTime
   endDate     DateTime
   guidePages  String       @default("[]")
+  phases      String       @default("[]")
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   submissions Submission[]

@@ -24,6 +24,8 @@ export default function AdminPage() {
   const [guidePages, setGuidePages] = useState<{title: string; content: string; imageUrl: string}[]>([]);
   const [taggingEvent, setTaggingEvent] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [editingPhases, setEditingPhases] = useState<any | null>(null);
+  const [phaseList, setPhaseList] = useState<{ name: string; startDate: string; endDate: string }[]>([]);
 
   // Submissions State
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -111,6 +113,26 @@ export default function AdminPage() {
       body: JSON.stringify({ guidePages, password }),
     });
     if (res.ok) { await fetchEvents(); setEditingGuide(null); }
+    else alert('저장 실패');
+  };
+
+  const openPhaseEditor = (event: any) => {
+    let phases: { name: string; startDate: string; endDate: string }[] = [];
+    try { phases = JSON.parse(event.phases || '[]'); } catch { phases = []; }
+    setPhaseList(phases.length > 0 ? phases : [{ name: '', startDate: '', endDate: '' }]);
+    setEditingPhases(event);
+  };
+
+  const handleSavePhases = async () => {
+    if (!editingPhases) return;
+    // 이름과 두 날짜가 모두 채워진 기간만 저장
+    const cleaned = phaseList.filter(p => p.name.trim() && p.startDate && p.endDate);
+    const res = await fetch(`/api/events/${editingPhases.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phases: cleaned, password }),
+    });
+    if (res.ok) { await fetchEvents(); setEditingPhases(null); }
     else alert('저장 실패');
   };
 
@@ -402,6 +424,9 @@ export default function AdminPage() {
                       <button onClick={() => openTagging(ev)} style={{ background: 'none', border: 'none', color: '#6c757d', cursor: 'pointer', padding: '4px', fontSize: '13px' }}>
                         게시물 태깅
                       </button>
+                      <button onClick={() => openPhaseEditor(ev)} title="답사/본행사 등 기간 설정" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                        <CalendarDays size={16} /> 기간 편집
+                      </button>
                       <button onClick={() => openGuideEditor(ev)} title="안내 페이지 편집" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                         <BookOpen size={16} /> 안내 편집
                       </button>
@@ -456,6 +481,68 @@ export default function AdminPage() {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button className="btn btn-secondary" onClick={() => setEditingGuide(null)} style={{ flex: 1 }}>취소</button>
               <button className="btn btn-primary" onClick={handleSaveGuide} style={{ flex: 1 }}>저장하기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 기간(답사/본행사) 편집 모달 */}
+      {editingPhases && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '560px', background: 'white', position: 'relative', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }}>
+            <button onClick={() => setEditingPhases(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 style={{ marginBottom: '6px' }}>{editingPhases.name} — 기간 설정</h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
+              답사기간, 본행사처럼 행사를 여러 기간으로 나눠 랭킹을 따로 볼 수 있습니다. 각 기록은 관찰 일시 기준으로 자동 분류됩니다.
+            </p>
+
+            {phaseList.map((p, i) => (
+              <div key={i} style={{ marginBottom: '12px', padding: '16px', background: 'rgba(0,0,0,0.03)', borderRadius: '12px', position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setPhaseList(prev => prev.filter((_, j) => j !== i))}
+                  title="이 기간 삭제"
+                  style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer' }}
+                >
+                  <Trash2 size={16} />
+                </button>
+                <div style={{ marginBottom: '8px' }}>
+                  <label className="form-label" style={{ fontSize: '12px' }}>기간 이름</label>
+                  <input
+                    className="form-control" placeholder="예: 답사기간 / 본행사" value={p.name}
+                    onChange={e => setPhaseList(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label className="form-label" style={{ fontSize: '12px' }}>시작일</label>
+                    <input
+                      type="date" className="form-control" value={p.startDate}
+                      onChange={e => setPhaseList(prev => prev.map((x, j) => j === i ? { ...x, startDate: e.target.value } : x))}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label className="form-label" style={{ fontSize: '12px' }}>종료일</label>
+                    <input
+                      type="date" className="form-control" value={p.endDate}
+                      onChange={e => setPhaseList(prev => prev.map((x, j) => j === i ? { ...x, endDate: e.target.value } : x))}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setPhaseList(prev => [...prev, { name: '', startDate: '', endDate: '' }])}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--primary)', cursor: 'pointer', padding: '8px 12px', border: '1px dashed var(--primary)', borderRadius: '8px', background: 'none', marginBottom: '20px' }}
+            >
+              <Plus size={16} /> 기간 추가
+            </button>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-secondary" onClick={() => setEditingPhases(null)} style={{ flex: 1 }}>취소</button>
+              <button className="btn btn-primary" onClick={handleSavePhases} style={{ flex: 1 }}>저장하기</button>
             </div>
           </div>
         </div>

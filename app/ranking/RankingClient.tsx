@@ -1,30 +1,93 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Trophy, ChevronLeft, Award, Crown, X } from 'lucide-react';
 import { format } from 'date-fns';
 
-type RankingData = {
-  teamName: string;
-  count: number;
-  submissions: any[];
+type Phase = { name: string; startDate: string; endDate: string };
+
+type EventData = {
+  id: string;
+  name: string;
+  slug: string;
+  isActive: boolean;
+  startDate: string;
+  endDate: string;
+  phases: string;
 };
 
-export default function RankingClient({ rankings }: { rankings: RankingData[] }) {
+function parsePhases(raw: string): Phase[] {
+  try {
+    const arr = JSON.parse(raw || '[]');
+    return Array.isArray(arr) ? arr.filter((p: any) => p && p.name) : [];
+  } catch {
+    return [];
+  }
+}
+
+// 기록의 관찰 일시가 해당 기간(phase)에 속하는지 (종료일은 그 날 끝까지 포함)
+function inPhase(dateIso: string, phase: Phase): boolean {
+  const d = new Date(dateIso).getTime();
+  const start = new Date(phase.startDate).getTime();
+  const end = new Date(phase.endDate);
+  end.setHours(23, 59, 59, 999);
+  return d >= start && d <= end.getTime();
+}
+
+export default function RankingClient({
+  submissions,
+  events,
+}: {
+  submissions: any[];
+  events: EventData[];
+}) {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+
+  // 기본 선택 행사: 진행중 행사 → 없으면 가장 최근 행사 → 없으면 전체
+  const defaultEventId = useMemo(() => {
+    if (events.length === 0) return 'all';
+    const active = events.find(e => e.isActive);
+    return (active || events[0]).id;
+  }, [events]);
+
+  const [selectedEventId, setSelectedEventId] = useState<string>(defaultEventId);
+  const [selectedPhase, setSelectedPhase] = useState<number | 'all'>('all');
 
   // 모달 열릴 때 배경 스크롤 방지
   useEffect(() => {
-    if (selectedItem) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    document.body.style.overflow = selectedItem ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
   }, [selectedItem]);
+
+  const selectedEvent = events.find(e => e.id === selectedEventId) || null;
+  const phases = selectedEvent ? parsePhases(selectedEvent.phases) : [];
+
+  const rankings = useMemo(() => {
+    let filtered = submissions;
+
+    // 1) 행사 필터
+    if (selectedEventId !== 'all') {
+      filtered = filtered.filter(s => s.eventId === selectedEventId);
+      // 2) 기간(phase) 필터
+      if (selectedPhase !== 'all' && phases[selectedPhase]) {
+        filtered = filtered.filter(s => inPhase(s.dateTime, phases[selectedPhase]));
+      }
+    }
+
+    // 팀별 그룹화 후 개수 내림차순
+    const teamMap = new Map<string, any[]>();
+    filtered.forEach(sub => {
+      if (!sub.teamName || sub.teamName.trim() === '') return;
+      if (!teamMap.has(sub.teamName)) teamMap.set(sub.teamName, []);
+      teamMap.get(sub.teamName)!.push(sub);
+    });
+    return Array.from(teamMap.entries())
+      .map(([teamName, subs]) => ({ teamName, count: subs.length, submissions: subs }))
+      .sort((a, b) => b.count - a.count);
+  }, [submissions, selectedEventId, selectedPhase, phases]);
+
+  const totalRecords = rankings.reduce((sum, r) => sum + r.count, 0);
 
   const getMedalIcon = (index: number) => {
     if (index === 0) return <Crown size={28} style={{ color: '#FFD700' }} />;
@@ -32,6 +95,19 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
     if (index === 2) return <Award size={28} style={{ color: '#CD7F32' }} />;
     return <span style={{ fontWeight: 800, fontSize: '18px', color: 'var(--text-muted)', width: '28px', textAlign: 'center' }}>{index + 1}</span>;
   };
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    padding: '7px 14px',
+    borderRadius: '20px',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: 700,
+    whiteSpace: 'nowrap',
+    background: active ? 'var(--primary)' : 'rgba(0,0,0,0.05)',
+    color: active ? 'white' : 'var(--text-muted)',
+    transition: 'all 0.2s',
+  });
 
   return (
     <main className="wide-container" style={{ paddingBottom: '80px' }}>
@@ -47,9 +123,49 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
           <div style={{ width: '24px' }}></div>
         </div>
 
+        {/* 행사 선택 탭 */}
+        {events.length > 0 && (
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px' }}>
+            {events.map(ev => (
+              <button
+                key={ev.id}
+                style={tabStyle(selectedEventId === ev.id)}
+                onClick={() => { setSelectedEventId(ev.id); setSelectedPhase('all'); }}
+              >
+                {ev.name}
+              </button>
+            ))}
+            <button
+              style={tabStyle(selectedEventId === 'all')}
+              onClick={() => { setSelectedEventId('all'); setSelectedPhase('all'); }}
+            >
+              전체
+            </button>
+          </div>
+        )}
+
+        {/* 기간(phase) 선택 탭 */}
+        {selectedEventId !== 'all' && phases.length > 0 && (
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '16px' }}>
+            <button style={tabStyle(selectedPhase === 'all')} onClick={() => setSelectedPhase('all')}>
+              전체 기간
+            </button>
+            {phases.map((p, i) => (
+              <button key={i} style={tabStyle(selectedPhase === i)} onClick={() => setSelectedPhase(i)}>
+                {p.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="glass-panel" style={{ padding: '24px' }}>
-          <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '32px' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '8px' }}>
             가장 많은 생태 기록을 남긴 탐사대입니다!
+          </p>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', marginBottom: '32px' }}>
+            {selectedEvent ? selectedEvent.name : '전체 행사'}
+            {selectedEventId !== 'all' && selectedPhase !== 'all' && phases[selectedPhase] ? ` · ${phases[selectedPhase].name}` : ''}
+            {' · '}총 {totalRecords}건
           </p>
 
           {rankings.length === 0 ? (
@@ -59,10 +175,10 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {rankings.map((ranking, index) => (
-                <div 
-                  key={ranking.teamName} 
-                  style={{ 
-                    display: 'flex', 
+                <div
+                  key={ranking.teamName}
+                  style={{
+                    display: 'flex',
                     flexDirection: 'column',
                     padding: '20px',
                     background: index < 3 ? 'var(--primary-light)' : 'rgba(0,0,0,0.02)',
@@ -90,10 +206,10 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
                   </div>
 
                   {/* 썸네일 가로 스크롤 영역 */}
-                  <div className="ranking-scroll" style={{ 
-                    display: 'flex', 
-                    gap: '12px', 
-                    overflowX: 'auto', 
+                  <div className="ranking-scroll" style={{
+                    display: 'flex',
+                    gap: '12px',
+                    overflowX: 'auto',
                     paddingBottom: '8px',
                     WebkitOverflowScrolling: 'touch',
                   }}>
@@ -104,7 +220,7 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
                       const urls = JSON.parse(sub.mediaUrls || '[]');
                       if (urls.length === 0) return null;
                       return (
-                        <div 
+                        <div
                           key={sub.id}
                           onClick={() => setSelectedItem(sub)}
                           style={{
@@ -119,8 +235,8 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
                             backgroundColor: 'rgba(0,0,0,0.05)'
                           }}
                         >
-                          <img 
-                            src={urls[0]} 
+                          <img
+                            src={urls[0]}
                             alt={sub.name}
                             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                           />
@@ -133,7 +249,7 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
             </div>
           )}
         </div>
-        
+
         <div style={{ textAlign: 'center', marginTop: '32px' }}>
           <Link href="/gallery" className="btn btn-secondary" style={{ display: 'inline-flex' }}>
             도감 구경하러 가기
@@ -144,12 +260,12 @@ export default function RankingClient({ rankings }: { rankings: RankingData[] })
       {/* 상세 모달 */}
       {selectedItem && (
         <div
-          style={{ 
-            position: 'fixed', 
-            top: 0, left: 0, right: 0, bottom: 0, 
-            background: 'rgba(0,0,0,0.8)', 
-            backdropFilter: 'blur(8px)', 
-            zIndex: 1000, 
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 1000,
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch'
           }}
