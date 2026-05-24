@@ -35,6 +35,7 @@ model Submission {
   lng        Float?
   uploaderIp String?
   editToken  String?
+  tzFixed    Boolean  @default(false)
   eventId    String?
   event      Event?   @relation(fields: [eventId], references: [id])
   likes      Like[]

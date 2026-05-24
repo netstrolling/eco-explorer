@@ -230,9 +230,14 @@ export default function SubmitPage() {
         finalMemo += finalMemo ? '\n\n(사진 출처: 위키백과)' : '(사진 출처: 위키백과)';
       }
 
+      // datetime-local 값은 타임존 정보가 없는 '벽시계' 문자열이라,
+      // 사용자 기기(한국) 기준으로 해석한 뒤 정확한 UTC ISO로 변환해 보낸다.
+      const rawDt = formData.get('dateTime') as string;
+      const dateTimeIso = rawDt ? new Date(rawDt).toISOString() : new Date().toISOString();
+
       const data = {
         teamName,
-        dateTime: formData.get('dateTime'),
+        dateTime: dateTimeIso,
         location: formData.get('location'),
         category: formData.get('category'),
         name: formData.get('name') || '모름',

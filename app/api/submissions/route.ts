@@ -46,6 +46,8 @@ export async function POST(request: Request) {
         uploaderIp: ip,
         eventId: activeEvent?.id || null,
         editToken,
+        // 폼이 이미 정확한 UTC를 보내므로 보정 대상에서 제외
+        tzFixed: true,
       }
     });
 
