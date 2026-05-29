@@ -75,6 +75,11 @@ export default function EventGalleryPage() {
   if (loading) return <main className="wide-container"><div style={{ padding: '40px', textAlign: 'center' }}>불러오는 중...</div></main>;
   if (!event) return <main className="wide-container"><div style={{ padding: '40px', textAlign: 'center' }}>행사를 찾을 수 없습니다.</div></main>;
 
+  // 종료일이 지난 행사는 기록하기 버튼을 숨김 (종료일 당일까지는 가능)
+  const eventEnd = new Date(event.endDate);
+  eventEnd.setHours(23, 59, 59, 999);
+  const isEnded = eventEnd.getTime() < Date.now();
+
   return (
     <main className="wide-container">
       <div className="animate-fade-in-up">
@@ -100,9 +105,11 @@ export default function EventGalleryPage() {
             <Link href={`/events/${slug}/guide`} className="btn btn-secondary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <BookOpen size={15} /> 안내 보기
             </Link>
-            <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Camera size={15} /> 기록하기
-            </Link>
+            {!isEnded && (
+              <Link href="/submit" className="btn btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Camera size={15} /> 기록하기
+              </Link>
+            )}
           </div>
         </div>
 
