@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingPhases, setEditingPhases] = useState<any | null>(null);
   const [phaseList, setPhaseList] = useState<{ name: string; startDate: string; endDate: string }[]>([]);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [eventForm, setEventForm] = useState<{ name: string; slug: string; startDate: string; endDate: string }>({ name: '', slug: '', startDate: '', endDate: '' });
 
   // Submissions State
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -84,6 +86,39 @@ export default function AdminPage() {
     });
     if (res.ok) fetchEvents();
     else alert('삭제 실패');
+  };
+
+  // datetime-local 입력값으로 변환 (로컬 시간 기준)
+  const toLocalInput = (d: string) => {
+    const dt = new Date(d);
+    const off = dt.getTimezoneOffset() * 60000;
+    return new Date(dt.getTime() - off).toISOString().slice(0, 16);
+  };
+
+  const openEventEditor = (ev: any) => {
+    setEventForm({
+      name: ev.name,
+      slug: ev.slug,
+      startDate: toLocalInput(ev.startDate),
+      endDate: toLocalInput(ev.endDate),
+    });
+    setEditingEvent(ev);
+  };
+
+  const handleSaveEventInfo = async () => {
+    if (!editingEvent) return;
+    if (!eventForm.name.trim() || !eventForm.slug.trim() || !eventForm.startDate || !eventForm.endDate) {
+      alert('모든 항목을 입력해주세요.');
+      return;
+    }
+    if (eventForm.slug !== editingEvent.slug && !confirm('슬러그를 변경하면 기존 /events/' + editingEvent.slug + ' 주소가 더 이상 동작하지 않습니다. 계속하시겠습니까?')) return;
+    const res = await fetch(`/api/events/${editingEvent.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...eventForm, password }),
+    });
+    if (res.ok) { await fetchEvents(); setEditingEvent(null); }
+    else alert('저장 실패 (슬러그가 중복되었을 수 있습니다)');
   };
 
   const openGuideEditor = (event: any) => {
@@ -435,6 +470,9 @@ export default function AdminPage() {
                       <button onClick={() => openGuideEditor(ev)} title="안내 페이지 편집" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                         <BookOpen size={16} /> 안내 편집
                       </button>
+                      <button onClick={() => openEventEditor(ev)} title="행사 정보 수정 (이름/슬러그/기간)" style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                        <Edit2 size={16} /> 정보 수정
+                      </button>
                       <button onClick={() => handleDeleteEvent(ev.id)} title="삭제" style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', padding: '4px' }}>
                         <Trash2 size={16} />
                       </button>
@@ -489,6 +527,39 @@ export default function AdminPage() {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button className="btn btn-secondary" onClick={() => setEditingGuide(null)} style={{ flex: 1 }}>취소</button>
               <button className="btn btn-primary" onClick={handleSaveGuide} style={{ flex: 1 }}>저장하기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 행사 정보 수정 모달 */}
+      {editingEvent && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', background: 'white', position: 'relative', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }}>
+            <button onClick={() => setEditingEvent(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 style={{ marginBottom: '20px' }}>행사 정보 수정</h2>
+            <div style={{ marginBottom: '14px' }}>
+              <label className="form-label" style={{ fontSize: '13px' }}>행사명</label>
+              <input className="form-control" value={eventForm.name} onChange={e => setEventForm(f => ({ ...f, name: e.target.value }))} placeholder="우도 생태 탐사" />
+            </div>
+            <div style={{ marginBottom: '14px' }}>
+              <label className="form-label" style={{ fontSize: '13px' }}>슬러그 (URL)</label>
+              <input className="form-control" value={eventForm.slug} onChange={e => setEventForm(f => ({ ...f, slug: e.target.value }))} placeholder="udo-2026-05" />
+              <div style={{ fontSize: '12px', color: '#dc3545', marginTop: '4px' }}>변경 시 기존 /events/{editingEvent.slug} 주소가 동작하지 않습니다.</div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ flex: 1 }}>
+                <label className="form-label" style={{ fontSize: '13px' }}>시작일</label>
+                <input type="datetime-local" className="form-control" value={eventForm.startDate} onChange={e => setEventForm(f => ({ ...f, startDate: e.target.value }))} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="form-label" style={{ fontSize: '13px' }}>종료일</label>
+                <input type="datetime-local" className="form-control" value={eventForm.endDate} onChange={e => setEventForm(f => ({ ...f, endDate: e.target.value }))} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-secondary" onClick={() => setEditingEvent(null)} style={{ flex: 1 }}>취소</button>
+              <button className="btn btn-primary" onClick={handleSaveEventInfo} style={{ flex: 1 }}>저장하기</button>
             </div>
           </div>
         </div>
