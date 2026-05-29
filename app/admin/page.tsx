@@ -55,12 +55,17 @@ export default function AdminPage() {
   const handleCreateEvent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    // datetime-local은 타임존 없는 '벽시계' 문자열이라, 브라우저(한국) 기준으로
+    // 해석한 뒤 정확한 UTC ISO로 변환해 보낸다. (서버에서 new Date() 하면 UTC로 오해석됨)
+    const startRaw = fd.get('startDate') as string;
+    const endRaw = fd.get('endDate') as string;
     const res = await fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: fd.get('name'), slug: fd.get('slug'),
-        startDate: fd.get('startDate'), endDate: fd.get('endDate'),
+        startDate: new Date(startRaw).toISOString(),
+        endDate: new Date(endRaw).toISOString(),
         password,
       }),
     });
@@ -115,7 +120,14 @@ export default function AdminPage() {
     const res = await fetch(`/api/events/${editingEvent.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...eventForm, password }),
+      body: JSON.stringify({
+        name: eventForm.name,
+        slug: eventForm.slug,
+        // 벽시계 문자열을 브라우저(한국) 기준 UTC ISO로 변환해 전송
+        startDate: new Date(eventForm.startDate).toISOString(),
+        endDate: new Date(eventForm.endDate).toISOString(),
+        password,
+      }),
     });
     if (res.ok) { await fetchEvents(); setEditingEvent(null); }
     else alert('저장 실패 (슬러그가 중복되었을 수 있습니다)');
