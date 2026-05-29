@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Leaf, Camera, Trophy, CalendarDays } from 'lucide-react'
+import { Leaf, Camera, Trophy, CalendarDays, Library } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic';
@@ -60,6 +60,13 @@ export default async function Home() {
               <Trophy size={20} />
               명예의 전당 (랭킹)
             </Link>
+
+            {activeEvents.length > 0 && (
+              <Link href={`/events/${activeEvents[0].slug}`} className="btn btn-secondary" style={{ padding: '16px' }}>
+                <Library size={20} />
+                도감 구경하러 가기
+              </Link>
+            )}
           </div>
         </div>
         
