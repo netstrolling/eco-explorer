@@ -1,0 +1,195 @@
+/* /space-lab 전용 스타일 — 모든 선택자는 .sl-root 하위로 한정해 전역 globals.css 와 격리. */
+
+.sl-root {
+  --sl-bg: #05060f;
+  --sl-panel: rgba(20, 24, 48, 0.72);
+  --sl-border: rgba(120, 140, 220, 0.22);
+  --sl-text: #e8ecff;
+  --sl-muted: #97a0c8;
+  --sl-accent: #6c8cff;
+  --sl-sun: #ff6b35;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  color: var(--sl-text);
+  background: var(--sl-bg);
+  font-family: 'Pretendard', system-ui, sans-serif;
+  /* 동적 배경(JS에서 --sl-dyn 갱신)을 깔고 위에 별 효과 */
+  background-image: var(--sl-dyn, radial-gradient(circle at 50% 120%, #1a1140 0%, #05060f 60%));
+  background-attachment: fixed;
+  transition: background-image 1.2s ease;
+}
+
+.sl-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 18px 80px;
+}
+
+.sl-h1 {
+  color: var(--sl-text);
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.sl-sub { color: var(--sl-muted); font-size: 13px; margin-bottom: 20px; }
+
+.sl-panel {
+  background: var(--sl-panel);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--sl-border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+/* 탭 */
+.sl-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+.sl-tab {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--sl-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--sl-muted);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.sl-tab.active {
+  background: linear-gradient(135deg, #2a3470, #4a2a70);
+  color: #fff;
+  border-color: var(--sl-accent);
+  box-shadow: 0 4px 18px rgba(108, 140, 255, 0.3);
+}
+
+/* 버튼 */
+.sl-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 18px; border-radius: 12px; border: 1px solid var(--sl-border);
+  background: rgba(255, 255, 255, 0.06); color: var(--sl-text);
+  font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease;
+}
+.sl-btn:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-1px); }
+.sl-btn.primary {
+  background: linear-gradient(135deg, var(--sl-accent), #9b6cff);
+  border-color: transparent; color: #fff;
+}
+.sl-btn.sun { background: linear-gradient(135deg, var(--sl-sun), #ffb13d); border-color: transparent; color: #2a0d00; }
+.sl-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* 토글 (sim/live) */
+.sl-seg { display: inline-flex; border: 1px solid var(--sl-border); border-radius: 10px; overflow: hidden; }
+.sl-seg button {
+  padding: 8px 14px; background: transparent; color: var(--sl-muted);
+  border: none; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.sl-seg button.active { background: var(--sl-accent); color: #fff; }
+
+/* 페르소나 카드 */
+.sl-persona-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.sl-persona {
+  text-align: center; padding: 16px 10px; border-radius: 14px;
+  border: 1px solid var(--sl-border); background: rgba(255, 255, 255, 0.04);
+  cursor: pointer; transition: all 0.2s ease;
+}
+.sl-persona:hover { transform: translateY(-3px); border-color: var(--sl-accent); }
+.sl-persona .emoji { font-size: 34px; }
+.sl-persona .name { font-weight: 700; margin-top: 6px; font-size: 14px; }
+.sl-persona .tag { font-size: 11px; color: var(--sl-muted); margin-top: 6px; line-height: 1.4; }
+
+/* Cosmic Progress Bar */
+.sl-progress-track {
+  position: relative; height: 10px; border-radius: 8px; margin: 28px 6px 34px;
+  background: linear-gradient(90deg, #0a0d28, #2a1a55, var(--sl-sun));
+}
+.sl-progress-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px;
+  background: linear-gradient(90deg, rgba(108,140,255,0.2), #fff);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  transition: width 0.6s ease;
+}
+.sl-planet-dot {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  font-size: 18px; transition: all 0.3s ease; cursor: default;
+}
+.sl-planet-dot.passed { filter: none; opacity: 1; }
+.sl-planet-dot.future { opacity: 0.35; filter: grayscale(0.6); }
+.sl-planet-dot .lbl {
+  position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; white-space: nowrap; color: var(--sl-muted);
+}
+.sl-ship {
+  position: absolute; top: -20px; transform: translateX(-50%);
+  font-size: 20px; transition: left 0.6s ease; filter: drop-shadow(0 0 6px #fff);
+}
+
+/* 상태/지표 */
+.sl-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.sl-stat { text-align: center; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.04); }
+.sl-stat .v { font-size: 22px; font-weight: 700; }
+.sl-stat .k { font-size: 11px; color: var(--sl-muted); margin-top: 2px; }
+.sl-statusbar {
+  padding: 12px 16px; border-radius: 12px; font-weight: 600; font-size: 14px;
+  background: rgba(108, 140, 255, 0.12); border: 1px solid var(--sl-border);
+  margin-bottom: 16px;
+}
+.sl-gravity { color: var(--sl-sun); }
+
+/* 미션 */
+.sl-mission {
+  padding: 14px; border-radius: 12px; border: 1px solid var(--sl-border);
+  background: rgba(255, 255, 255, 0.04); margin-bottom: 10px;
+}
+.sl-mission .t { font-weight: 700; font-size: 14px; }
+.sl-mission .d { font-size: 13px; color: var(--sl-muted); margin-top: 4px; }
+.sl-mission.active { border-color: var(--sl-sun); background: rgba(255, 107, 53, 0.1); }
+
+/* 행성 위치 가이드 */
+.sl-guide-row {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: 10px; font-size: 13px; border: 1px solid transparent;
+}
+.sl-guide-row:nth-child(odd) { background: rgba(255, 255, 255, 0.03); }
+.sl-guide-row.active { border-color: var(--sl-sun); background: rgba(255, 107, 53, 0.1); }
+.sl-guide-row .em { font-size: 18px; width: 24px; text-align: center; }
+.sl-guide-row .nm { font-weight: 700; min-width: 64px; }
+.sl-guide-row .au { color: var(--sl-muted); min-width: 56px; font-size: 12px; }
+.sl-guide-row .lm { color: var(--sl-muted); flex: 1; }
+
+/* 지도 */
+.sl-map { height: 420px; width: 100%; border-radius: 14px; overflow: hidden; border: 1px solid var(--sl-border); }
+/* 다크 타일 위 우주 느낌 보정 */
+.sl-map .leaflet-tile-pane { filter: saturate(0.7) hue-rotate(200deg) brightness(0.9); }
+.sl-map .leaflet-container { background: #05060f; }
+.sl-map .leaflet-popup-content-wrapper, .sl-map .leaflet-popup-tip {
+  background: #141830; color: var(--sl-text); border: 1px solid var(--sl-border);
+}
+.sl-hint { font-size: 12px; color: var(--sl-muted); margin: 8px 2px 0; }
+
+/* 도착 팝업 (모달) */
+.sl-modal-backdrop {
+  position: fixed; inset: 0; z-index: 1100; background: rgba(2, 3, 10, 0.78);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.sl-modal {
+  max-width: 420px; width: 100%; padding: 28px; border-radius: 20px;
+  background: linear-gradient(160deg, #1a1140, #0a0820);
+  border: 1px solid var(--sl-border); text-align: center;
+  box-shadow: 0 0 60px rgba(255, 107, 53, 0.25);
+}
+.sl-modal h2 { color: var(--sl-text); font-size: 22px; }
+.sl-modal p { color: var(--sl-muted); font-size: 14px; margin: 10px 0 20px; }
+
+/* 닫기(메인으로) 링크 */
+.sl-close { position: fixed; top: 14px; right: 16px; z-index: 1050; }
+
+.sl-marker-emoji {
+  font-size: 26px; text-align: center; line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(0,0,0,0.6));
+}
