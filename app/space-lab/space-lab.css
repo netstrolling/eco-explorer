@@ -205,6 +205,50 @@
   filter: drop-shadow(0 0 6px rgba(0,0,0,0.6));
 }
 
+/* ── K-Science Heritage ── */
+.sl-h1-heritage { color: #e8d3a0 !important; }
+.sl-panel-heritage { border-color: rgba(201, 150, 46, 0.28); background: rgba(42, 36, 24, 0.55); }
+.sl-seg-heritage button.active { background: #c9962e; color: #2a1d00; }
+/* 고지도 느낌: 타일에 세피아 필터 */
+.sl-map-heritage .leaflet-tile-pane { filter: sepia(0.55) saturate(0.8) contrast(0.95) brightness(0.95); }
+.sl-marker-ring { animation: slPulse 1.4s ease-in-out infinite; }
+@keyframes slPulse { 0%,100% { filter: drop-shadow(0 0 4px #c9962e); } 50% { filter: drop-shadow(0 0 12px #ffce5a); } }
+
+.sl-her-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border-radius: 12px; border: 1px solid transparent; margin-bottom: 6px;
+}
+.sl-her-row:nth-child(even) { background: rgba(255,255,255,0.03); }
+.sl-her-row.near { border-color: #c9962e; background: rgba(201, 150, 46, 0.12); }
+.sl-her-row .em { font-size: 24px; }
+.sl-her-row .nm { font-weight: 700; font-size: 14px; color: var(--sl-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sl-her-row .meta { font-size: 12px; color: #bba980; }
+
+/* 미션/에디터 모달 — 양피지 톤 */
+.sl-modal-heritage {
+  background: linear-gradient(160deg, #f3e7c8, #e7d4a8);
+  border: 1px solid #c9962e; color: #3a2c12;
+  box-shadow: 0 0 60px rgba(201, 150, 46, 0.25);
+}
+.sl-her-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700;
+  background: #d8bd7e; color: #4a370f;
+}
+.sl-quiz-options { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.sl-quiz-opt {
+  padding: 12px 14px; border-radius: 10px; border: 1px solid #caa961;
+  background: #faf2dd; color: #3a2c12; font-size: 14px; font-weight: 600; cursor: pointer; text-align: left;
+}
+.sl-quiz-opt:hover { background: #fff7e6; }
+.sl-quiz-opt.sel { background: #c9962e; color: #2a1d00; border-color: #a87c1e; }
+.sl-her-success { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sl-input-light { background: #fbf4e2; border: 1px solid #caa961; color: #3a2c12; }
+.sl-input-light::placeholder { color: #9a8a60; }
+.sl-input-light:focus { border-color: #a87c1e; }
+.sl-field-row { display: flex; gap: 10px; }
+.sl-flabel { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: #5b4a2a; margin-bottom: 10px; flex: 1; }
+.sl-her-hr { border: none; border-top: 1px solid #caa961; margin: 14px 0; }
+
 /* 카메라 미션 */
 .sl-cam {
   position: fixed; inset: 0; z-index: 1200; background: #05060f;

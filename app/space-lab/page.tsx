@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import './space-lab.css';
 import SolarJourney from './components/SolarJourney';
+import HeritageMode from './components/HeritageMode';
 
 type Tab = 'solar' | 'heritage';
 
@@ -24,19 +25,14 @@ export default function SpaceLabPage() {
             🚀 Solar Journey
           </button>
           <button className={`sl-tab ${tab === 'heritage' ? 'active' : ''}`} onClick={() => setTab('heritage')}>
-            🏛️ 과학의 길
+            🏛️ K-Science Heritage
           </button>
         </div>
 
         {tab === 'solar' ? (
           <SolarJourney onBgChange={handleBg} />
         ) : (
-          <div className="sl-panel">
-            <h2 className="sl-h1" style={{ fontSize: 18 }}>🏛️ 과학의 길 (K-Science Heritage)</h2>
-            <p className="sl-sub" style={{ marginBottom: 0 }}>
-              조선·근대 과학사 유적 탐사 모드는 다음 단계(Phase 2)에서 구현됩니다.
-            </p>
-          </div>
+          <HeritageMode onBgChange={handleBg} />
         )}
       </div>
     </div>
