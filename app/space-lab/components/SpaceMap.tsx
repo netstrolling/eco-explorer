@@ -1,6 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import { LatLng } from '../lib/geo';
+import { Journey } from '../lib/solar';
 
 const Inner = dynamic(() => import('./SpaceMapInner'), {
   ssr: false,
@@ -12,6 +13,9 @@ const Inner = dynamic(() => import('./SpaceMapInner'), {
 });
 
 interface Props {
+  journey: Journey;
+  landmarks: Record<string, string> | null;
+  currentOrbitKey: string;
   pos: LatLng | null;
   shipEmoji: string;
   canSim: boolean;

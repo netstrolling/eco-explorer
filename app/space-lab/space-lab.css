@@ -90,6 +90,16 @@
 }
 .sl-seg button.active { background: var(--sl-accent); color: #fff; }
 
+/* 셋업 라벨/인풋 */
+.sl-label { font-weight: 700; font-size: 13px; margin-bottom: 8px; color: var(--sl-text); }
+.sl-input {
+  width: 100%; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--sl-border); background: rgba(255, 255, 255, 0.05);
+  color: var(--sl-text); font-size: 15px; font-family: inherit;
+}
+.sl-input::placeholder { color: var(--sl-muted); }
+.sl-input:focus { outline: none; border-color: var(--sl-accent); }
+
 /* 페르소나 카드 */
 .sl-persona-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .sl-persona {
@@ -98,6 +108,7 @@
   cursor: pointer; transition: all 0.2s ease;
 }
 .sl-persona:hover { transform: translateY(-3px); border-color: var(--sl-accent); }
+.sl-persona.sel { border-color: var(--sl-accent); background: rgba(108, 140, 255, 0.15); box-shadow: 0 4px 18px rgba(108,140,255,0.25); }
 .sl-persona .emoji { font-size: 34px; }
 .sl-persona .name { font-weight: 700; margin-top: 6px; font-size: 14px; }
 .sl-persona .tag { font-size: 11px; color: var(--sl-muted); margin-top: 6px; line-height: 1.4; }
