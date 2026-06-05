@@ -7,9 +7,13 @@ import {
 } from '../lib/solar';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { createLog, updateLog } from '../lib/log';
+import { Artifact, addArtifact, listArtifacts } from '../lib/artifacts';
+import type { Planet } from '../lib/solar';
 import CosmicProgressBar from './CosmicProgressBar';
 import SpaceMap from './SpaceMap';
 import SetupScreen, { SetupResult } from './SetupScreen';
+import CameraMission from './CameraMission';
+import ArtifactLog from './ArtifactLog';
 
 function lerpColor(a: string, b: string, t: number) {
   const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
@@ -43,6 +47,19 @@ function JourneyView({ setup, onBgChange, onReset }: { setup: SetupResult; onBgC
   const [toSun, setToSun] = useState(false);
   const prevPos = useRef<LatLng | null>(null);
   const logId = useRef<string | null>(null);
+  const [camPlanet, setCamPlanet] = useState<Planet | null>(null);
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+
+  useEffect(() => { setArtifacts(listArtifacts()); }, []);
+
+  const handleCapture = (planet: Planet, dataUrl: string, capturedTilt: number) => {
+    addArtifact({ planetKey: planet.key, planetName: planet.name, emoji: planet.emoji, dataUrl, tilt: capturedTilt, at: Date.now() });
+    setArtifacts(listArtifacts());
+    if (logId.current) {
+      const done = Array.from(new Set([...(artifacts.map((a) => a.planetKey)), planet.key]));
+      updateLog(logId.current, { missionsDone: done });
+    }
+  };
 
   const au = pos ? positionToAU(journey, pos) : START_AU;
   const p = progress(au);
@@ -154,13 +171,35 @@ function JourneyView({ setup, onBgChange, onReset }: { setup: SetupResult; onBgC
       {/* 궤도 미션 */}
       <div className="sl-panel">
         <h3 className="sl-h1" style={{ fontSize: 16 }}>🛰️ 궤도 미션 (Orbital Missions)</h3>
-        {PLANETS.filter((pl) => pl.mission).map((pl) => (
-          <div key={pl.key} className={`sl-mission ${pl.key === orbit.key ? 'active' : ''}`}>
-            <div className="t">{pl.emoji} {pl.name} — {pl.mission!.title}{pl.key === orbit.key && ' · 현재 궤도'}{pl.axialTilt !== undefined && <span style={{ color: 'var(--sl-muted)', fontWeight: 400 }}> · 자전축 {pl.axialTilt}°</span>}</div>
-            <div className="d">{pl.mission!.desc}</div>
-          </div>
-        ))}
+        {PLANETS.filter((pl) => pl.mission).map((pl) => {
+          const shot = artifacts.some((a) => a.planetKey === pl.key);
+          return (
+            <div key={pl.key} className={`sl-mission ${pl.key === orbit.key ? 'active' : ''}`}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div className="t">{pl.emoji} {pl.name} — {pl.mission!.title}{pl.key === orbit.key && ' · 현재 궤도'}{pl.axialTilt !== undefined && <span style={{ color: 'var(--sl-muted)', fontWeight: 400 }}> · 자전축 {pl.axialTilt}°</span>}</div>
+                  <div className="d">{pl.mission!.desc}</div>
+                </div>
+                <button className={`sl-btn ${shot ? '' : 'primary'}`} style={{ padding: '8px 12px', whiteSpace: 'nowrap' }} onClick={() => setCamPlanet(pl)}>
+                  {shot ? '✅ 재촬영' : '📷 촬영'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {/* 도감 */}
+      <ArtifactLog artifacts={artifacts} onChange={() => setArtifacts(listArtifacts())} />
+
+      {/* 카메라 미션 모달 */}
+      {camPlanet && (
+        <CameraMission
+          planet={camPlanet}
+          onClose={() => setCamPlanet(null)}
+          onCapture={(url, t) => handleCapture(camPlanet, url, t)}
+        />
+      )}
 
       {showArrival && (
         <div className="sl-modal-backdrop" onClick={() => setShowArrival(false)}>
