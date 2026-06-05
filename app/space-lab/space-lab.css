@@ -300,6 +300,8 @@
 }
 .sl-artifact-label { font-size: 10px; text-align: center; padding: 4px 2px; color: var(--sl-muted); }
 .sl-shot-done { border-color: #2ee06a !important; background: rgba(46, 224, 106, 0.12) !important; }
+/* 완료 미션 — 채워진 초록(상태 표시), 미완료 미션과 확실히 구분 */
+.sl-mission-done { background: rgba(46, 224, 106, 0.22) !important; border-color: #2ee06a !important; color: #aef5c8 !important; }
 
 /* 인증샷을 칸 전체에 깔기 */
 .sl-artifact-photobg {

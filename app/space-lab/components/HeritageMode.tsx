@@ -110,8 +110,8 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
                 <div className="nm">{s.name} {done && '✅'}</div>
                 <div className="meta">{s.era} · {s.theme}{d !== null && ` · ${formatMeters(d)}`}{near && ' · 🎯 범위 안'}</div>
               </div>
-              <button className={`sl-btn ${near && !done ? 'primary' : ''}`} style={{ padding: '8px 12px' }} onClick={() => openSite(s)}>
-                {done ? '완료' : '미션'}
+              <button className={`sl-btn ${done ? 'sl-mission-done' : near ? 'primary' : ''}`} style={{ padding: '8px 12px', whiteSpace: 'nowrap' }} onClick={() => openSite(s)}>
+                {done ? '✅ 완료' : near ? '🎯 미션' : '🧩 미션'}
               </button>
               <button className={`sl-btn ${shot ? 'sl-shot-done' : ''}`} style={{ padding: '8px 10px' }} title={shot ? '인증샷 완료 — 다시 찍기' : 'Time Warp 인증샷'} onClick={() => setCamSite(s)}>{shot ? '📸✅' : '📸'}</button>
               <button className="sl-btn" style={{ padding: '8px 10px' }} onClick={() => setEditor({ site: s, isNew: false })}>✎</button>
