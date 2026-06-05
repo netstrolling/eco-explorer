@@ -2,12 +2,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Planet } from '../lib/solar';
 
-// 자전축 기울기(0~180°)를 화면 롤 각도(-90~90°)로 매핑.
-function targetRoll(axialTilt: number): number {
-  return ((axialTilt + 90) % 180) - 90;
+// 실제 자전축은 0~180°지만, 폰을 90°까지 눕히면 모바일 브라우저가 landscape로
+// 자동 회전해 UX가 깨진다(iOS는 회전잠금 API 미지원). 따라서 정렬에 필요한
+// 물리적 기울기를 ±MAX_LEAN 이내로 압축한다. 순서(기울수록 더 눕힘)는 유지.
+const MAX_LEAN = 45;
+function targetLean(axialTilt: number): number {
+  const fold = axialTilt > 90 ? 180 - axialTilt : axialTilt; // 0~90
+  const lean = (fold / 90) * MAX_LEAN;
+  return axialTilt > 90 ? -lean : lean; // 90° 넘는 행성은 반대로 기울이는 느낌
 }
 
-const ALIGN_TOL = 12; // 정렬 허용 오차(도)
+const ALIGN_TOL = 10; // 정렬 허용 오차(도)
 
 type Phase = 'intro' | 'live' | 'captured';
 
@@ -19,7 +24,7 @@ interface Props {
 
 export default function CameraMission({ planet, onClose, onCapture }: Props) {
   const tilt = planet.axialTilt ?? 0;
-  const target = targetRoll(tilt);
+  const target = targetLean(tilt);
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +86,7 @@ export default function CameraMission({ planet, onClose, onCapture }: Props) {
     // 반투명 행성 오버레이 (자전축만큼 회전)
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.rotate((tilt * Math.PI) / 180);
+    ctx.rotate((target * Math.PI) / 180);
     ctx.globalAlpha = 0.4;
     ctx.font = `${Math.min(w, h) * 0.5}px serif`;
     ctx.textAlign = 'center';
@@ -147,8 +152,8 @@ export default function CameraMission({ planet, onClose, onCapture }: Props) {
     setPhase('captured');
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     streamRef.current?.getTracks().forEach((t) => t.stop());
-    onCapture(url, target);
-  }, [onCapture, target]);
+    onCapture(url, tilt); // 기록엔 실제 자전축 값 저장
+  }, [onCapture, tilt]);
 
   useEffect(() => () => stopAll(), [stopAll]);
 
@@ -167,7 +172,7 @@ export default function CameraMission({ planet, onClose, onCapture }: Props) {
           <div style={{ fontSize: 64 }}>{planet.emoji}</div>
           <h2 className="sl-h1">{planet.mission?.title ?? '행성 촬영'}</h2>
           <p style={{ color: '#9aa3c8', maxWidth: 320 }}>{planet.mission?.desc}</p>
-          <p style={{ color: '#9aa3c8', fontSize: 13 }}>흰 선(현재 기울기)을 {planet.name} 자전축 가이드선({tilt}°)에 맞추면 정렬됩니다.</p>
+          <p style={{ color: '#9aa3c8', fontSize: 13 }}>흰 선(현재 기울기)을 {planet.name} 자전축 가이드선(점선)에 맞추면 정렬됩니다.<br />실제 자전축은 {tilt}°지만, 화면이 돌지 않도록 ±{MAX_LEAN}° 안에서 편하게 기울이도록 안내해요.</p>
           <button className="sl-btn primary" onClick={start} style={{ marginTop: 8 }}>📷 카메라 시작</button>
         </div>
       )}
