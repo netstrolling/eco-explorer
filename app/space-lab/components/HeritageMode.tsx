@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LatLng, formatMeters } from '../lib/geo';
 import {
-  Site, loadSites, saveSites, resetSites, emptySite, loadCollected, collect, Collected,
+  Site, loadSites, saveSites, resetSites, emptySite, loadCollected, collect, collectPhoto, Collected,
   distanceTo, inRange,
 } from '../lib/heritage';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -10,6 +10,7 @@ import HeritageMap from './HeritageMap';
 import HeritageMission from './HeritageMission';
 import HeritageSiteEditor from './HeritageSiteEditor';
 import HeritageArtifactLog from './HeritageArtifactLog';
+import TimeWarpCamera from './TimeWarpCamera';
 
 const HERITAGE_BG = 'radial-gradient(circle at 50% 0%, #2a2418 0%, #14110b 55%, #0a0805 100%)';
 
@@ -17,6 +18,7 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
   const [sites, setSites] = useState<Site[]>([]);
   const [collected, setCollected] = useState<Collected[]>([]);
   const [missionSite, setMissionSite] = useState<Site | null>(null);
+  const [camSite, setCamSite] = useState<Site | null>(null);
   const [editor, setEditor] = useState<{ site: Site; isNew: boolean } | null>(null);
   const prompted = useRef<Set<string>>(new Set());
 
@@ -26,7 +28,8 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
   useEffect(() => { onBgChange(HERITAGE_BG); }, [onBgChange]);
   useEffect(() => { setSites(loadSites()); setCollected(loadCollected()); }, []);
 
-  const doneIds = useMemo(() => new Set(collected.map((c) => c.siteId)), [collected]);
+  // '완료'는 퀴즈 유물(name)을 받은 경우만. 인증샷만 찍은 건 완료가 아님.
+  const doneIds = useMemo(() => new Set(collected.filter((c) => c.name).map((c) => c.siteId)), [collected]);
 
   // Geofencing: 새로 반경 진입 + 미완료 → 미션 자동 팝업 (1회)
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
   }, [pos, sites, doneIds, missionSite, editor]);
 
   const onSuccess = (s: Site) => {
-    collect({ siteId: s.id, name: s.artifact.name, emoji: s.artifact.emoji, at: Date.now() });
+    collect({ siteId: s.id, name: s.artifact.name, emoji: s.artifact.emoji });
     setCollected(loadCollected());
   };
   const openSite = (s: Site) => {
@@ -108,6 +111,7 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
               <button className={`sl-btn ${near && !done ? 'primary' : ''}`} style={{ padding: '8px 12px' }} onClick={() => openSite(s)}>
                 {done ? '완료' : '미션'}
               </button>
+              <button className="sl-btn" style={{ padding: '8px 10px' }} title="Time Warp 인증샷" onClick={() => setCamSite(s)}>📸</button>
               <button className="sl-btn" style={{ padding: '8px 10px' }} onClick={() => setEditor({ site: s, isNew: false })}>✎</button>
             </div>
           );
@@ -121,6 +125,9 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
       )}
       {editor && (
         <HeritageSiteEditor initial={editor.site} isNew={editor.isNew} onSave={saveSite} onCancel={() => setEditor(null)} onDelete={editor.isNew ? undefined : deleteSite} />
+      )}
+      {camSite && (
+        <TimeWarpCamera site={camSite} onClose={() => setCamSite(null)} onCapture={(url) => { collectPhoto(camSite.id, url); setCollected(loadCollected()); }} />
       )}
     </>
   );

@@ -103,19 +103,39 @@ export function emptySite(): Site {
   };
 }
 
-// ── 도감(수집한 부품) ──
-export interface Collected { siteId: string; name: string; emoji: string; at: number; }
+// ── 도감(수집한 부품 + Time Warp 인증샷) ──
+export interface Collected { siteId: string; name?: string; emoji?: string; photoUrl?: string; at: number; }
 
 export function loadCollected(): Collected[] {
   if (typeof window === 'undefined') return [];
   try { return JSON.parse(window.localStorage.getItem(ARTI_KEY) || '[]'); } catch { return []; }
 }
 
-export function collect(c: Collected) {
+function upsert(siteId: string, patch: Partial<Collected>) {
   if (typeof window === 'undefined') return;
-  const list = loadCollected().filter((x) => x.siteId !== c.siteId);
-  list.push(c);
-  window.localStorage.setItem(ARTI_KEY, JSON.stringify(list));
+  const list = loadCollected();
+  const i = list.findIndex((x) => x.siteId === siteId);
+  if (i >= 0) list[i] = { ...list[i], ...patch, at: Date.now() };
+  else list.push({ siteId, at: Date.now(), ...patch });
+  try {
+    window.localStorage.setItem(ARTI_KEY, JSON.stringify(list));
+  } catch {
+    // 사진 용량 초과 시: 가장 오래된 사진부터 비우며 재시도
+    const trimmed = [...list].sort((a, b) => a.at - b.at);
+    for (const t of trimmed) {
+      if (t.photoUrl && t.siteId !== siteId) { delete t.photoUrl; try { window.localStorage.setItem(ARTI_KEY, JSON.stringify(list)); return; } catch { /* 계속 */ } }
+    }
+  }
+}
+
+/** 퀴즈 성공 → 유물 부품 수집. */
+export function collect(c: { siteId: string; name: string; emoji: string }) {
+  upsert(c.siteId, { name: c.name, emoji: c.emoji });
+}
+
+/** Time Warp 인증샷 저장. */
+export function collectPhoto(siteId: string, photoUrl: string) {
+  upsert(siteId, { photoUrl });
 }
 
 // ── Geofencing ──
