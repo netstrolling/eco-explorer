@@ -12,18 +12,77 @@ interface Props {
   onDelete?: (id: string) => void;
 }
 
+interface SearchHit { name: string; lat: number; lng: number; display: string; }
+
 export default function HeritageSiteEditor({ initial, isNew, onSave, onCancel, onDelete }: Props) {
   const [s, setS] = useState<Site>(initial);
   const [picking, setPicking] = useState(false);
+  const [q, setQ] = useState('');
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [aiErr, setAiErr] = useState<string | null>(null);
   const set = (patch: Partial<Site>) => setS((p) => ({ ...p, ...patch }));
   const setMission = (m: Mission) => setS((p) => ({ ...p, mission: m }));
 
   const kind = s.mission.kind;
 
+  const search = async () => {
+    if (!q.trim()) return;
+    setSearching(true); setHits([]);
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&accept-language=ko&countrycodes=kr&limit=5&q=${encodeURIComponent(q)}`);
+      const j = await r.json();
+      setHits(j.map((x: any) => ({ name: String(x.display_name).split(',')[0], lat: +x.lat, lng: +x.lon, display: x.display_name })));
+    } catch { setHits([]); } finally { setSearching(false); }
+  };
+  const pickHit = (h: SearchHit) => { set({ name: s.name || h.name, lat: h.lat, lng: h.lng }); setHits([]); setQ(h.name); };
+
+  const suggest = async () => {
+    if (!s.name.trim()) return;
+    setSuggesting(true); setAiErr(null);
+    try {
+      const r = await fetch('/api/space-lab/suggest', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: s.name, theme: s.theme }),
+      });
+      const j = await r.json();
+      if (!r.ok) { setAiErr(j.error || 'AI 추천 실패'); return; }
+      setS((p) => ({
+        ...p,
+        theme: j.theme || p.theme, tagline: j.tagline || p.tagline, blurb: j.blurb || p.blurb,
+        mission: j.mission || p.mission,
+        artifact: { name: j.artifact?.name || p.artifact.name, emoji: j.artifact?.emoji || p.artifact.emoji },
+      }));
+    } catch { setAiErr('AI 추천 중 오류가 발생했습니다.'); } finally { setSuggesting(false); }
+  };
+
   return (
     <div className="sl-modal-backdrop" onClick={onCancel}>
       <div className="sl-modal sl-modal-heritage" style={{ maxWidth: 480, textAlign: 'left', maxHeight: '88vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
         <h2 style={{ color: '#3a2c12', textAlign: 'center' }}>{isNew ? '유적 추가' : '유적 수정'}</h2>
+
+        {/* 장소 검색 자동완성 */}
+        <label className="sl-flabel">🔍 장소 검색 (이름·좌표 자동 입력)
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input className="sl-input sl-input-light" placeholder="예: 보신각, 경복궁, 환구단…" value={q}
+              onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } }} />
+            <button className="sl-btn" onClick={search} disabled={searching}>{searching ? '…' : '검색'}</button>
+          </div>
+        </label>
+        {hits.length > 0 && (
+          <div className="sl-search-list">
+            {hits.map((h, i) => (
+              <button key={i} className="sl-search-item" onClick={() => pickHit(h)}>📍 {h.display}</button>
+            ))}
+          </div>
+        )}
+        <button className="sl-btn primary" style={{ width: '100%', marginBottom: 6 }} onClick={suggest} disabled={!s.name.trim() || suggesting}>
+          {suggesting ? '✨ AI가 작성 중…' : '✨ AI로 분야·설명·퀴즈 추천'}
+        </button>
+        {aiErr && <p className="sl-hint" style={{ color: '#b3261e' }}>{aiErr}</p>}
+        {!s.name.trim() && <p className="sl-hint" style={{ color: '#8a7045' }}>먼저 장소를 검색하거나 이름을 입력하면 AI 추천을 받을 수 있어요.</p>}
+        <hr className="sl-her-hr" />
 
         <div className="sl-field-row">
           <label className="sl-flabel">아이콘<input className="sl-input sl-input-light" value={s.emoji} maxLength={4} onChange={(e) => set({ emoji: e.target.value })} /></label>

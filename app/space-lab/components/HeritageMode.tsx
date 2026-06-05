@@ -13,6 +13,7 @@ import HeritageArtifactLog from './HeritageArtifactLog';
 import TimeWarpCamera from './TimeWarpCamera';
 
 const HERITAGE_BG = 'radial-gradient(circle at 50% 0%, #2a2418 0%, #14110b 55%, #0a0805 100%)';
+const ADMIN_PIN = 'galda'; // 관리자 모드 PIN (프로토타입용 — 클라이언트 게이트)
 
 export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) => void }) {
   const [sites, setSites] = useState<Site[]>([]);
@@ -20,13 +21,25 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
   const [missionSite, setMissionSite] = useState<Site | null>(null);
   const [camSite, setCamSite] = useState<Site | null>(null);
   const [editor, setEditor] = useState<{ site: Site; isNew: boolean } | null>(null);
+  const [admin, setAdmin] = useState(false);
   const prompted = useRef<Set<string>>(new Set());
+
+  const toggleAdmin = () => {
+    if (admin) { setAdmin(false); try { localStorage.removeItem('sl_heritage_admin'); } catch {} return; }
+    const pin = window.prompt('관리자 PIN을 입력하세요');
+    if (pin === null) return;
+    if (pin === ADMIN_PIN) { setAdmin(true); try { localStorage.setItem('sl_heritage_admin', '1'); } catch {} }
+    else window.alert('PIN이 올바르지 않습니다.');
+  };
 
   // 출발 위치: 첫 유적 근처(서울역) 기준
   const { pos, mode, setMode, setSimPos, accuracy, error } = useGeolocation([37.5565, 126.9760]);
 
   useEffect(() => { onBgChange(HERITAGE_BG); }, [onBgChange]);
-  useEffect(() => { setSites(loadSites()); setCollected(loadCollected()); }, []);
+  useEffect(() => {
+    setSites(loadSites()); setCollected(loadCollected());
+    try { if (localStorage.getItem('sl_heritage_admin') === '1') setAdmin(true); } catch {}
+  }, []);
 
   // '완료'는 퀴즈 유물(name)을 받은 경우만. 인증샷만 찍은 건 완료가 아님.
   const doneIds = useMemo(() => new Set(collected.filter((c) => c.name).map((c) => c.siteId)), [collected]);
@@ -72,9 +85,12 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
           <strong className="sl-h1-heritage">🏛️ K-Science Heritage</strong>
           <div style={{ color: '#bba980', fontSize: 12 }}>조선·근대 과학사 유적 탐사 · 수집 {doneIds.size}/{sites.length}</div>
         </div>
-        <div className="sl-seg sl-seg-heritage">
-          <button className={mode === 'sim' ? 'active' : ''} onClick={() => setMode('sim')}>🧪 시뮬</button>
-          <button className={mode === 'live' ? 'active' : ''} onClick={() => setMode('live')}>📡 GPS</button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="sl-seg sl-seg-heritage">
+            <button className={mode === 'sim' ? 'active' : ''} onClick={() => setMode('sim')}>🧪 시뮬</button>
+            <button className={mode === 'live' ? 'active' : ''} onClick={() => setMode('live')}>📡 GPS</button>
+          </div>
+          <button className={`sl-btn ${admin ? 'sl-admin-badge' : ''}`} style={{ padding: '8px 10px' }} title="관리자 모드" onClick={toggleAdmin}>{admin ? '🔧 관리자' : '🔧'}</button>
         </div>
       </div>
 
@@ -93,10 +109,14 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
       <div className="sl-panel sl-panel-heritage">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <h3 className="sl-h1 sl-h1-heritage" style={{ fontSize: 16, margin: 0 }}>🗺️ 탐사 포인트</h3>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button className="sl-btn" onClick={() => setEditor({ site: emptySite(), isNew: true })}>＋ 추가</button>
-            <button className="sl-btn" title="기본값 복원" onClick={() => { const s = resetSites(); setSites(s); }}>↺</button>
-          </div>
+          {admin ? (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button className="sl-btn" onClick={() => setEditor({ site: emptySite(), isNew: true })}>＋ 추가</button>
+              <button className="sl-btn" title="기본값 복원" onClick={() => { if (window.confirm('유적을 기본 5곳으로 되돌릴까요? (추가/수정 내용 사라짐)')) { const s = resetSites(); setSites(s); } }}>↺</button>
+            </div>
+          ) : (
+            <span className="sl-hint" style={{ margin: 0, color: '#8a7045' }}>🔧 관리자 모드에서 편집</span>
+          )}
         </div>
         {sorted.map((s) => {
           const d = pos ? distanceTo(s, pos) : null;
@@ -114,7 +134,7 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
                 {done ? '✅ 완료' : near ? '🎯 미션' : '🧩 미션'}
               </button>
               <button className={`sl-btn ${shot ? 'sl-shot-done' : ''}`} style={{ padding: '8px 10px' }} title={shot ? '인증샷 완료 — 다시 찍기' : 'Time Warp 인증샷'} onClick={() => setCamSite(s)}>{shot ? '📸✅' : '📸'}</button>
-              <button className="sl-btn" style={{ padding: '8px 10px' }} onClick={() => setEditor({ site: s, isNew: false })}>✎</button>
+              {admin && <button className="sl-btn" style={{ padding: '8px 10px' }} onClick={() => setEditor({ site: s, isNew: false })}>✎</button>}
             </div>
           );
         })}

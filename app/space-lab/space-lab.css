@@ -248,6 +248,13 @@
 .sl-field-row { display: flex; gap: 10px; }
 .sl-flabel { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: #5b4a2a; margin-bottom: 10px; flex: 1; }
 .sl-her-hr { border: none; border-top: 1px solid #caa961; margin: 14px 0; }
+.sl-search-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; max-height: 170px; overflow-y: auto; }
+.sl-search-item {
+  text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid #caa961;
+  background: #fbf4e2; color: #3a2c12; font-size: 12px; cursor: pointer; line-height: 1.4;
+}
+.sl-search-item:hover { background: #fff7e6; }
+.sl-admin-badge { background: rgba(46,224,106,0.18) !important; border-color: #2ee06a !important; color: #aef5c8 !important; }
 
 /* 카메라 미션 */
 .sl-cam {
