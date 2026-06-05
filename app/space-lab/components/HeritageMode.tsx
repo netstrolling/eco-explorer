@@ -13,7 +13,7 @@ import HeritageArtifactLog from './HeritageArtifactLog';
 import TimeWarpCamera from './TimeWarpCamera';
 
 const HERITAGE_BG = 'radial-gradient(circle at 50% 0%, #2a2418 0%, #14110b 55%, #0a0805 100%)';
-const ADMIN_PIN = 'galda'; // 관리자 모드 PIN (프로토타입용 — 클라이언트 게이트)
+const ADMIN_PIN = 'galdar123'; // 관리자 모드 PIN (프로토타입용 — 클라이언트 게이트)
 
 export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) => void }) {
   const [sites, setSites] = useState<Site[]>([]);
