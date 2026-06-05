@@ -1,5 +1,6 @@
 'use client';
-import { PLANETS } from '../lib/solar';
+import { PLANETS, PLANET_EN } from '../lib/solar';
+import { useI18n } from '../lib/i18n';
 
 // AU는 안쪽 행성으로 갈수록 값이 급격히 작아져(5.2→0) 선형 배치 시 라벨이 겹친다.
 // 따라서 행성은 "통과 마일스톤"으로 균등 배치하고, 우주선만 현재 AU로 인접 궤도 사이를 보간한다.
@@ -22,6 +23,7 @@ function shipPct(au: number): number {
 }
 
 export default function CosmicProgressBar({ shipEmoji, currentAU }: { shipEmoji: string; currentAU: number }) {
+  const { t } = useI18n();
   const pct = Math.max(0, Math.min(100, shipPct(currentAU)));
 
   return (
@@ -29,15 +31,16 @@ export default function CosmicProgressBar({ shipEmoji, currentAU }: { shipEmoji:
       <div className="sl-progress-fill" style={{ width: `${pct}%` }} />
       {PLANETS.map((p, i) => {
         const passed = p.au >= currentAU; // 현재보다 바깥(au 큼) = 이미 통과
+        const name = t({ ko: p.name, en: PLANET_EN[p.key]?.name ?? p.name });
         return (
           <div
             key={p.key}
             className={`sl-planet-dot ${passed ? 'passed' : 'future'}`}
             style={{ left: `${planetPct(i)}%` }}
-            title={`${p.name} · ${p.au} AU`}
+            title={`${name} · ${p.au} AU`}
           >
             {p.emoji}
-            <span className="lbl">{p.name}</span>
+            <span className="lbl">{name}</span>
           </div>
         );
       })}

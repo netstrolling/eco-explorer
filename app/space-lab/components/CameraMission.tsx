@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Planet } from '../lib/solar';
+import { Planet, PLANET_EN } from '../lib/solar';
+import { useI18n } from '../lib/i18n';
 
 // 실제 자전축은 0~180°지만, 폰을 90°까지 눕히면 모바일 브라우저가 landscape로
 // 자동 회전해 UX가 깨진다(iOS는 회전잠금 API 미지원). 따라서 정렬에 필요한
@@ -23,6 +24,10 @@ interface Props {
 }
 
 export default function CameraMission({ planet, onClose, onCapture }: Props) {
+  const { t } = useI18n();
+  const pName = t({ ko: planet.name, en: PLANET_EN[planet.key]?.name ?? planet.name });
+  const mTitle = t({ ko: planet.mission?.title ?? '', en: PLANET_EN[planet.key]?.mission?.title ?? planet.mission?.title ?? '' });
+  const mDesc = t({ ko: planet.mission?.desc ?? '', en: PLANET_EN[planet.key]?.mission?.desc ?? planet.mission?.desc ?? '' });
   const tilt = planet.axialTilt ?? 0;
   const target = targetLean(tilt);
 
@@ -132,7 +137,7 @@ export default function CameraMission({ planet, onClose, onCapture }: Props) {
       }, 50);
     } catch (e: any) {
       // 카메라 실패해도(데스크톱/권한거부) 그리기 루프는 돌려 가이드/슬라이더 테스트 가능
-      setError(`카메라를 열 수 없습니다 (${e?.name || e}). 기울기 가이드는 계속 사용할 수 있어요.`);
+      setError(t({ ko: `카메라를 열 수 없습니다 (${e?.name || e}). 기울기 가이드는 계속 사용할 수 있어요.`, en: `Can't open the camera (${e?.name || e}). The tilt guide still works.` }));
       setPhase('live');
       setTimeout(() => { rafRef.current = requestAnimationFrame(drawLoop); }, 50);
     }
@@ -161,19 +166,19 @@ export default function CameraMission({ planet, onClose, onCapture }: Props) {
     <div className="sl-cam">
       <div className="sl-cam-top">
         <div>
-          <strong>{planet.emoji} {planet.name}</strong>
-          <span style={{ color: '#9aa3c8', marginLeft: 8, fontSize: 13 }}>자전축 {tilt}° 에 맞춰 촬영</span>
+          <strong>{planet.emoji} {pName}</strong>
+          <span style={{ color: '#9aa3c8', marginLeft: 8, fontSize: 13 }}>{t({ ko: '자전축 {x}° 에 맞춰 촬영', en: 'Shoot at axial tilt {x}°' }, { x: tilt })}</span>
         </div>
-        <button className="sl-btn" onClick={() => { stopAll(); onClose(); }}>✕ 닫기</button>
+        <button className="sl-btn" onClick={() => { stopAll(); onClose(); }}>✕ {t({ ko: '닫기', en: 'Close' })}</button>
       </div>
 
       {phase === 'intro' && (
         <div className="sl-cam-intro">
           <div style={{ fontSize: 64 }}>{planet.emoji}</div>
-          <h2 className="sl-h1">{planet.mission?.title ?? '행성 촬영'}</h2>
-          <p style={{ color: '#9aa3c8', maxWidth: 320 }}>{planet.mission?.desc}</p>
-          <p style={{ color: '#9aa3c8', fontSize: 13 }}>흰 선(현재 기울기)을 {planet.name} 자전축 가이드선(점선)에 맞추면 정렬됩니다.<br />실제 자전축은 {tilt}°지만, 화면이 돌지 않도록 ±{MAX_LEAN}° 안에서 편하게 기울이도록 안내해요.</p>
-          <button className="sl-btn primary" onClick={start} style={{ marginTop: 8 }}>📷 카메라 시작</button>
+          <h2 className="sl-h1">{mTitle || t({ ko: '행성 촬영', en: 'Planet Photo' })}</h2>
+          <p style={{ color: '#9aa3c8', maxWidth: 320 }}>{mDesc}</p>
+          <p style={{ color: '#9aa3c8', fontSize: 13 }}>{t({ ko: '흰 선(현재 기울기)을 {n} 자전축 가이드선(점선)에 맞추면 정렬됩니다.', en: 'Align the white line (your tilt) to {n}’s dashed axis guide.' }, { n: pName })}<br />{t({ ko: '실제 자전축은 {x}°지만, 화면이 돌지 않도록 ±{m}° 안에서 편하게 기울이도록 안내해요.', en: 'The true tilt is {x}°, but to avoid screen rotation we guide you within ±{m}°.' }, { x: tilt, m: MAX_LEAN })}</p>
+          <button className="sl-btn primary" onClick={start} style={{ marginTop: 8 }}>📷 {t({ ko: '카메라 시작', en: 'Start camera' })}</button>
         </div>
       )}
 
@@ -182,29 +187,29 @@ export default function CameraMission({ planet, onClose, onCapture }: Props) {
           <video ref={videoRef} playsInline muted style={{ display: 'none' }} />
           <canvas ref={canvasRef} className="sl-cam-canvas" />
           <div className={`sl-cam-badge ${aligned ? 'ok' : ''}`}>
-            {aligned ? '✅ 정렬됨!' : `기울기 ${Math.round(current)}° → 목표 ${Math.round(target)}°`}
+            {aligned ? `✅ ${t({ ko: '정렬됨!', en: 'Aligned!' })}` : `${t({ ko: '기울기', en: 'tilt' })} ${Math.round(current)}° → ${t({ ko: '목표', en: 'target' })} ${Math.round(target)}°`}
           </div>
           {error && <div className="sl-cam-err">{error}</div>}
           {!hasSensor && (
             <div className="sl-cam-slider">
-              <span>🖥️ 기울기(센서 없음)</span>
+              <span>🖥️ {t({ ko: '기울기(센서 없음)', en: 'tilt (no sensor)' })}</span>
               <input type="range" min={-90} max={90} value={manualTilt}
                 onChange={(e) => { const v = +e.target.value; setManualTilt(v); manualRef.current = v; }} />
               <span>{manualTilt}°</span>
             </div>
           )}
           <button className={`sl-btn ${aligned ? 'sun' : 'primary'} sl-cam-shutter`} onClick={capture}>
-            {aligned ? '📸 정렬 촬영!' : '📸 촬영'}
+            {aligned ? `📸 ${t({ ko: '정렬 촬영!', en: 'Aligned shot!' })}` : `📸 ${t({ ko: '촬영', en: 'Shoot' })}`}
           </button>
         </>
       )}
 
       {phase === 'captured' && savedUrl && (
         <div className="sl-cam-intro">
-          <h2 className="sl-h1">🎉 도감에 수집!</h2>
+          <h2 className="sl-h1">🎉 {t({ ko: '도감에 수집!', en: 'Added to your log!' })}</h2>
           <img src={savedUrl} alt="captured" style={{ maxWidth: '90%', borderRadius: 12, border: '1px solid var(--sl-border)' }} />
-          <p style={{ color: '#9aa3c8' }}>{planet.name} 자전축 {tilt}° 기록 완료.</p>
-          <button className="sl-btn primary" onClick={() => { stopAll(); onClose(); }}>확인</button>
+          <p style={{ color: '#9aa3c8' }}>{t({ ko: '{n} 자전축 {x}° 기록 완료.', en: '{n} axial tilt {x}° recorded.' }, { n: pName, x: tilt })}</p>
+          <button className="sl-btn primary" onClick={() => { stopAll(); onClose(); }}>{t({ ko: '확인', en: 'OK' })}</button>
         </div>
       )}
     </div>

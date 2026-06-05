@@ -4,7 +4,8 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMapEvents,
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLng } from '../lib/geo';
-import { Journey, PLANETS, planetLocation, ringRadius } from '../lib/solar';
+import { Journey, PLANETS, PLANET_EN, planetLocation, ringRadius } from '../lib/solar';
+import { useI18n } from '../lib/i18n';
 
 const emojiIcon = (emoji: string, size = 30) =>
   L.divIcon({
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export default function SpaceMapInner({ journey, landmarks, currentOrbitKey, pos, shipEmoji, canSim, onSimMove }: Props) {
+  const { t } = useI18n();
   const { start, galda, sun } = journey;
   const center: LatLng = pos ?? start;
 
@@ -87,9 +89,9 @@ export default function SpaceMapInner({ journey, landmarks, currentOrbitKey, pos
             <Marker key={p.key} position={planetLocation(journey, p.au)} icon={emojiIcon(p.emoji, size)}>
               <Popup>
                 <div style={{ minWidth: 150 }}>
-                  <strong>{p.emoji} {p.name}</strong> · {p.au} AU
+                  <strong>{p.emoji} {t({ ko: p.name, en: PLANET_EN[p.key]?.name ?? p.name })}</strong> · {p.au} AU
                   {landmarks?.[p.key] && <div style={{ fontSize: 12, color: '#9aa3c8', marginTop: 4 }}>📍 {landmarks[p.key]}</div>}
-                  {p.mission && <div style={{ fontSize: 12, marginTop: 6 }}>🛰️ {p.mission.title}</div>}
+                  {p.mission && <div style={{ fontSize: 12, marginTop: 6 }}>🛰️ {t({ ko: p.mission.title, en: PLANET_EN[p.key]?.mission?.title ?? p.mission.title })}</div>}
                 </div>
               </Popup>
             </Marker>
@@ -99,7 +101,7 @@ export default function SpaceMapInner({ journey, landmarks, currentOrbitKey, pos
         {/* 우주선 */}
         {pos && (
           <Marker position={pos} icon={emojiIcon(shipEmoji, 28)}>
-            <Popup>현재 위치 ({canSim ? '시뮬레이터' : '실시간 GPS'})</Popup>
+            <Popup>{t({ ko: '현재 위치', en: 'Your location' })} ({canSim ? t({ ko: '시뮬레이터', en: 'Simulator' }) : t({ ko: '실시간 GPS', en: 'Live GPS' })})</Popup>
           </Marker>
         )}
       </MapContainer>

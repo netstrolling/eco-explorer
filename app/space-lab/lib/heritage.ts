@@ -1,6 +1,7 @@
 'use client';
 // 기획2 K-Science Heritage — 조선·근대 과학사 유적 탐사 데이터 + CRUD(LocalStorage) + Geofencing.
 import { LatLng, haversine } from './geo';
+import { Lang } from './i18n';
 
 export type Era = '조선' | '근대';
 
@@ -70,6 +71,61 @@ export const SEED_SITES: Site[] = [
     artifact: { name: '제중원 의학서 한 장', emoji: '📖' },
   },
 ];
+
+// ── 영어 번역 (시드 유적 전용). 사용자 추가 유적은 원문 그대로 표시. ──
+interface SiteEn { name: string; theme: string; tagline: string; blurb: string; missionPrompt: string; options?: string[]; artifactName: string; }
+const SITE_EN: Record<string, SiteEn> = {
+  'seoul-station-old': {
+    name: 'Old Seoul Station', theme: 'Modern Standard Time', tagline: 'From Joseon time to modern time.',
+    blurb: 'The old Seoul Station (Culture Station Seoul 284), completed in 1925. With train timetables, the idea of modern standard time entered everyday life.',
+    missionPrompt: 'Sync to the modern clock — enter the current time in 24-hour HH:MM.',
+    artifactName: 'Standard-clock Gear',
+  },
+  seonhyecheong: {
+    name: 'Seonhyecheong Site (Namdaemun)', theme: 'Weights & Measures', tagline: 'The start of fair measurement.',
+    blurb: 'Site of Seonhyecheong, office of the Daedong tax law. Accurate standards of length, volume, and weight were vital to collect tribute and grain fairly.',
+    missionPrompt: 'About how many cm is 1 ja (尺), Joseon’s standard unit of length?',
+    options: ['About 30 cm', 'About 10 cm', 'About 100 cm', 'About 5 cm'],
+    artifactName: 'Brass Ruler (yucheok) Fragment',
+  },
+  supyogyo: {
+    name: 'Supyogyo Bridge Site (Cheonggyecheon)', theme: 'Hydrology & Flood Control', tagline: 'The most precise scale.',
+    blurb: 'Site of the bridge with the Supyo (water gauge) that read Cheonggyecheon’s water level — Joseon’s flood-control science to forecast and prepare for floods.',
+    missionPrompt: 'What did the Supyo (water gauge) by the bridge measure?',
+    options: ['Cheonggyecheon water level', 'The bridge’s length', 'The time of day', 'Wind strength'],
+    artifactName: 'Water-gauge Scale',
+  },
+  gwancheondae: {
+    name: 'Gwansanggam Observatory (Gwancheondae)', theme: 'Astronomical Observation', tagline: 'Reading the code of the sky.',
+    blurb: 'The Gwancheondae where the Gwansanggam observed the heavens (a national Treasure). It still stands before the Hyundai building; it handled astronomy and the calendar.',
+    missionPrompt: 'What was Joseon’s key instrument for measuring the motion and position of celestial bodies?',
+    options: ['Armillary sphere (Honcheonui)', 'Rain gauge (Cheugugi)', 'Water clock (Jagyeongnu)', 'Sundial (Angbu-ilgu)'],
+    artifactName: 'Armillary Sphere Piece',
+  },
+  jejungwon: {
+    name: 'Jejungwon Site', theme: 'Modern Medicine', tagline: 'Modern medicine that saves lives.',
+    blurb: 'Korea’s first modern hospital, founded in 1885. Now the site of the Constitutional Court — the starting point of Western medicine in Korea.',
+    missionPrompt: 'What was Jejungwon’s name when it first opened?',
+    options: ['Gwanghyewon', 'Hwarinseo', 'Hyeminseo', 'Jeonuigam'],
+    artifactName: 'A page from the Jejungwon medical book',
+  },
+};
+
+export function localizeEra(era: Era, lang: Lang): string {
+  if (lang === 'ko') return era;
+  return era === '조선' ? 'Joseon' : 'Modern';
+}
+
+/** 표시용 현지화 Site. CRUD는 원문(한국어)으로 다룬다. */
+export function localizeSite(s: Site, lang: Lang): Site {
+  if (lang === 'ko') return s;
+  const e = SITE_EN[s.id];
+  if (!e) return s; // 사용자 추가 유적은 원문 그대로
+  const mission: Mission = s.mission.kind === 'quiz'
+    ? { ...s.mission, prompt: e.missionPrompt, options: e.options ?? s.mission.options }
+    : { ...s.mission, prompt: e.missionPrompt };
+  return { ...s, name: e.name, theme: e.theme, tagline: e.tagline, blurb: e.blurb, mission, artifact: { ...s.artifact, name: e.artifactName } };
+}
 
 // ── 유적 CRUD (LocalStorage) ──
 export function loadSites(): Site[] {

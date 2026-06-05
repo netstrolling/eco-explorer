@@ -4,7 +4,8 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLng } from '../lib/geo';
-import { Site, inRange } from '../lib/heritage';
+import { Site, inRange, localizeEra } from '../lib/heritage';
+import { useI18n } from '../lib/i18n';
 
 const emojiIcon = (emoji: string, size = 30, ring = false) =>
   L.divIcon({
@@ -37,6 +38,7 @@ interface Props {
 }
 
 export default function HeritageMapInner({ sites, pos, canSim, onSimMove, onSiteClick }: Props) {
+  const { lang, t } = useI18n();
   const bounds: LatLng[] = sites.map((s) => [s.lat, s.lng] as LatLng);
   if (pos) bounds.push(pos);
   const center: LatLng = pos ?? (sites[0] ? [sites[0].lat, sites[0].lng] : [37.5759, 126.9769]);
@@ -62,9 +64,9 @@ export default function HeritageMapInner({ sites, pos, canSim, onSimMove, onSite
                 <Popup>
                   <div style={{ minWidth: 160 }}>
                     <strong>{s.emoji} {s.name}</strong>
-                    <div style={{ fontSize: 12, color: '#7a6033', marginTop: 2 }}>{s.era} · {s.theme}</div>
+                    <div style={{ fontSize: 12, color: '#7a6033', marginTop: 2 }}>{localizeEra(s.era, lang)} · {s.theme}</div>
                     <div style={{ fontSize: 12, marginTop: 6 }}>“{s.tagline}”</div>
-                    <div style={{ fontSize: 12, marginTop: 6, color: active ? '#2e7d32' : '#999' }}>{active ? '🎯 반경 안 — 클릭해 미션 시작' : '아직 범위 밖'}</div>
+                    <div style={{ fontSize: 12, marginTop: 6, color: active ? '#2e7d32' : '#999' }}>{active ? t({ ko: '🎯 반경 안 — 클릭해 미션 시작', en: '🎯 In range — tap to start the mission' }) : t({ ko: '아직 범위 밖', en: 'Out of range' })}</div>
                   </div>
                 </Popup>
               </Marker>
@@ -74,7 +76,7 @@ export default function HeritageMapInner({ sites, pos, canSim, onSimMove, onSite
 
         {pos && (
           <Marker position={pos} icon={emojiIcon('🧭', 26)}>
-            <Popup>현재 위치 ({canSim ? '시뮬레이터' : '실시간 GPS'})</Popup>
+            <Popup>{t({ ko: '현재 위치', en: 'Your location' })} ({canSim ? t({ ko: '시뮬레이터', en: 'Simulator' }) : t({ ko: '실시간 GPS', en: 'Live GPS' })})</Popup>
           </Marker>
         )}
       </MapContainer>

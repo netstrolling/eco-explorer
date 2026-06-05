@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Site } from '../lib/heritage';
+import { Site, localizeEra } from '../lib/heritage';
+import { useI18n } from '../lib/i18n';
 
 type Phase = 'intro' | 'live' | 'captured';
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function TimeWarpCamera({ site, onClose, onCapture }: Props) {
+  const { lang, t } = useI18n();
   const [phase, setPhase] = useState<Phase>('intro');
   const [error, setError] = useState<string | null>(null);
   const [savedUrl, setSavedUrl] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export default function TimeWarpCamera({ site, onClose, onCapture }: Props) {
     ctx.fillText(`${site.emoji} ${site.name}`, 16, h - 42);
     ctx.font = `${Math.round(Math.min(w, h) * 0.035)}px serif`;
     ctx.fillStyle = '#d8bd7e';
-    ctx.fillText(`${site.era} · ${site.theme} — K-Science Heritage`, 16, h - 20);
+    ctx.fillText(`${localizeEra(site.era, lang)} · ${site.theme} — K-Science Heritage`, 16, h - 20);
 
     // 우상단 유물 스탬프
     ctx.font = `${Math.round(Math.min(w, h) * 0.09)}px serif`;
@@ -70,7 +72,7 @@ export default function TimeWarpCamera({ site, onClose, onCapture }: Props) {
     ctx.globalAlpha = 1;
 
     rafRef.current = requestAnimationFrame(drawLoop);
-  }, [site]);
+  }, [site, lang]);
 
   const start = useCallback(async () => {
     setError(null);
@@ -84,7 +86,7 @@ export default function TimeWarpCamera({ site, onClose, onCapture }: Props) {
         rafRef.current = requestAnimationFrame(drawLoop);
       }, 50);
     } catch (e: any) {
-      setError(`카메라를 열 수 없습니다 (${e?.name || e}).`);
+      setError(t({ ko: `카메라를 열 수 없습니다 (${e?.name || e}).`, en: `Can't open the camera (${e?.name || e}).` }));
       setPhase('live');
       setTimeout(() => { rafRef.current = requestAnimationFrame(drawLoop); }, 50);
     }
@@ -110,16 +112,16 @@ export default function TimeWarpCamera({ site, onClose, onCapture }: Props) {
   return (
     <div className="sl-cam">
       <div className="sl-cam-top">
-        <div><strong>{site.emoji} {site.name}</strong><span style={{ color: '#9aa3c8', marginLeft: 8, fontSize: 13 }}>Time Warp 인증샷</span></div>
-        <button className="sl-btn" onClick={() => { stopAll(); onClose(); }}>✕ 닫기</button>
+        <div><strong>{site.emoji} {site.name}</strong><span style={{ color: '#9aa3c8', marginLeft: 8, fontSize: 13 }}>{t({ ko: 'Time Warp 인증샷', en: 'Time Warp Photo' })}</span></div>
+        <button className="sl-btn" onClick={() => { stopAll(); onClose(); }}>✕ {t({ ko: '닫기', en: 'Close' })}</button>
       </div>
 
       {phase === 'intro' && (
         <div className="sl-cam-intro">
           <div style={{ fontSize: 56 }}>{site.emoji}</div>
-          <h2 className="sl-h1">📸 Time Warp 인증샷</h2>
-          <p style={{ color: '#9aa3c8', maxWidth: 320 }}>{site.name}의 표석·유물을 세피아 톤으로 담아 도감에 남기세요.</p>
-          <button className="sl-btn primary" onClick={start}>📷 카메라 시작</button>
+          <h2 className="sl-h1">📸 {t({ ko: 'Time Warp 인증샷', en: 'Time Warp Photo' })}</h2>
+          <p style={{ color: '#9aa3c8', maxWidth: 320 }}>{t({ ko: '{n}의 표석·유물을 세피아 톤으로 담아 도감에 남기세요.', en: 'Capture {n}’s marker or artifact in sepia and save it to your log.' }, { n: site.name })}</p>
+          <button className="sl-btn primary" onClick={start}>📷 {t({ ko: '카메라 시작', en: 'Start camera' })}</button>
         </div>
       )}
 
@@ -128,15 +130,15 @@ export default function TimeWarpCamera({ site, onClose, onCapture }: Props) {
           <video ref={videoRef} playsInline muted style={{ display: 'none' }} />
           <canvas ref={canvasRef} className="sl-cam-canvas" />
           {error && <div className="sl-cam-err">{error}</div>}
-          <button className="sl-btn sun sl-cam-shutter" onClick={capture}>📸 찰칵</button>
+          <button className="sl-btn sun sl-cam-shutter" onClick={capture}>📸 {t({ ko: '찰칵', en: 'Snap' })}</button>
         </>
       )}
 
       {phase === 'captured' && savedUrl && (
         <div className="sl-cam-intro">
-          <h2 className="sl-h1">🎉 도감에 인증샷 수록!</h2>
+          <h2 className="sl-h1">🎉 {t({ ko: '도감에 인증샷 수록!', en: 'Saved to your log!' })}</h2>
           <img src={savedUrl} alt="time warp" style={{ maxWidth: '90%', borderRadius: 12, border: '1px solid var(--sl-border)' }} />
-          <button className="sl-btn primary" onClick={() => { stopAll(); onClose(); }}>확인</button>
+          <button className="sl-btn primary" onClick={() => { stopAll(); onClose(); }}>{t({ ko: '확인', en: 'OK' })}</button>
         </div>
       )}
     </div>

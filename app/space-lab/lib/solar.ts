@@ -42,6 +42,27 @@ export const PLANETS: Planet[] = [
   { key: 'sun', name: '태양', emoji: '☀️', au: 0, color: '#ff6b35' },
 ];
 
+// ── 영어 번역 맵 (지형지물 landmark는 한국 지명이라 KO 유지) ──
+export const PLANET_EN: Record<string, { name: string; mission?: { title: string; desc: string } }> = {
+  pluto: { name: 'Pluto' },
+  neptune: { name: 'Neptune', mission: { title: 'Deep-sea Wind', desc: 'Find the bluest object (sign, wall, sky) and photograph it.' } },
+  uranus: { name: 'Uranus', mission: { title: 'Tilted Axis', desc: 'Like nearly-sideways Uranus, tilt your phone 98° to capture the world.' } },
+  saturn: { name: 'Saturn', mission: { title: "The Ring's Secret", desc: 'Capture a round/ring-shaped structure (manhole, sign, wheel) at Saturn’s tilt.' } },
+  jupiter: { name: 'Jupiter', mission: { title: 'Great Storm Watch', desc: 'Photograph the windiest spot or the busiest intersection.' } },
+  belt: { name: 'Asteroid Belt', mission: { title: 'Through the Rubble', desc: 'Close up a rough texture — stone, brick, or gravel.' } },
+  mars: { name: 'Mars', mission: { title: 'Red Planet Hunt', desc: 'Find a red object nearby (mailbox, sign, etc.).' } },
+  earth: { name: 'Earth · Galda' },
+  venus: { name: 'Venus', mission: { title: 'Hot Veil', desc: 'Find the hottest spot or rising steam.' } },
+  mercury: { name: 'Mercury', mission: { title: "Sun's Gatekeeper", desc: 'Catch the strongest light reflection (glass, metal).' } },
+  sun: { name: 'Sun' },
+};
+export const PERSONA_EN: Record<string, { name: string; tagline: string }> = {
+  asteroid: { name: 'Wandering Asteroid', tagline: 'A rock adrift for billions of years, pulled in by Earth’s gravity.' },
+  alien: { name: 'Alien Intelligence', tagline: 'An explorer from an unknown civilization, observing the blue planet’s science.' },
+  rocky: { name: 'Rocky (Project Hail Mary)', tagline: 'A friend from Erid, here to save the stars alongside humanity.' },
+};
+export const PRESET_EN: Record<string, string> = { 'seoul-station': 'Seoul Station', 'city-hall': 'City Hall', gwanghwamun: 'Gwanghwamun' };
+
 // ── 출발지 프리셋 (행성별 지형지물은 각 출발지→갈다 직선 위 좌표를 역지오코딩해 사전 산출) ──
 export interface StartPreset {
   key: string;
