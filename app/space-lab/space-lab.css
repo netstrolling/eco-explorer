@@ -299,6 +299,8 @@
   font-size: 28px; opacity: 0.3; filter: grayscale(1);
 }
 .sl-artifact-label { font-size: 10px; text-align: center; padding: 4px 2px; color: var(--sl-muted); }
+.sl-shot-done { border-color: #2ee06a !important; background: rgba(46, 224, 106, 0.12) !important; }
+
 /* 인증샷을 칸 전체에 깔기 */
 .sl-artifact-photobg {
   position: relative; width: 100%; aspect-ratio: 1; padding: 0; border: none;

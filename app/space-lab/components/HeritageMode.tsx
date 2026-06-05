@@ -30,6 +30,7 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
 
   // '완료'는 퀴즈 유물(name)을 받은 경우만. 인증샷만 찍은 건 완료가 아님.
   const doneIds = useMemo(() => new Set(collected.filter((c) => c.name).map((c) => c.siteId)), [collected]);
+  const photoIds = useMemo(() => new Set(collected.filter((c) => c.photoUrl).map((c) => c.siteId)), [collected]);
 
   // Geofencing: 새로 반경 진입 + 미완료 → 미션 자동 팝업 (1회)
   useEffect(() => {
@@ -101,6 +102,7 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
           const d = pos ? distanceTo(s, pos) : null;
           const near = inRange(s, pos);
           const done = doneIds.has(s.id);
+          const shot = photoIds.has(s.id);
           return (
             <div key={s.id} className={`sl-her-row ${near ? 'near' : ''}`}>
               <span className="em">{s.emoji}</span>
@@ -111,7 +113,7 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
               <button className={`sl-btn ${near && !done ? 'primary' : ''}`} style={{ padding: '8px 12px' }} onClick={() => openSite(s)}>
                 {done ? '완료' : '미션'}
               </button>
-              <button className="sl-btn" style={{ padding: '8px 10px' }} title="Time Warp 인증샷" onClick={() => setCamSite(s)}>📸</button>
+              <button className={`sl-btn ${shot ? 'sl-shot-done' : ''}`} style={{ padding: '8px 10px' }} title={shot ? '인증샷 완료 — 다시 찍기' : 'Time Warp 인증샷'} onClick={() => setCamSite(s)}>{shot ? '📸✅' : '📸'}</button>
               <button className="sl-btn" style={{ padding: '8px 10px' }} onClick={() => setEditor({ site: s, isNew: false })}>✎</button>
             </div>
           );
