@@ -15,15 +15,15 @@ export default function HeritageArtifactLog({ sites, collected }: { sites: Site[
           const c = byId.get(s.id);
           const hasArtifact = !!c?.name;
           return (
-            <div key={s.id} className={`sl-artifact ${hasArtifact ? 'has' : 'empty'}`}>
-              {/* 메인: 항상 유물 아이콘 (잠금/해금) — 사진이 덮지 않음 */}
-              <div className="sl-artifact-locked" style={{ opacity: hasArtifact ? 1 : 0.25 }}>{s.artifact.emoji}</div>
-              {/* 인증샷: 모서리 썸네일, 탭하면 크게 */}
-              {c?.photoUrl && (
-                <button className="sl-artifact-photo" title="Time Warp 인증샷 보기"
-                  onClick={() => setZoom({ url: c.photoUrl!, title: s.name })}>
+            <div key={s.id} className={`sl-artifact ${hasArtifact || c?.photoUrl ? 'has' : 'empty'}`}>
+              {c?.photoUrl ? (
+                // 인증샷을 칸 전체에 깔고, 유물 아이콘은 모서리 배지로
+                <button className="sl-artifact-photobg" title="크게 보기" onClick={() => setZoom({ url: c.photoUrl!, title: s.name })}>
                   <img src={c.photoUrl} alt={`${s.name} 인증샷`} />
+                  <span className="sl-artifact-badge" style={{ opacity: hasArtifact ? 1 : 0.5 }}>{hasArtifact ? s.artifact.emoji : '🔒'}</span>
                 </button>
+              ) : (
+                <div className="sl-artifact-locked" style={{ opacity: hasArtifact ? 1 : 0.25 }}>{s.artifact.emoji}</div>
               )}
               <div className="sl-artifact-label">{hasArtifact ? s.artifact.name : `🔒 ${s.name}`}</div>
             </div>
