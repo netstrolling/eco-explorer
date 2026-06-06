@@ -27,6 +27,67 @@ export interface Site {
 
 const SITES_KEY = 'sl_heritage_sites';
 const ARTI_KEY = 'sl_heritage_artifacts';
+const ITEMS_KEY = 'sl_heritage_items';
+
+// ── 근접 아이템 비콘 (미션 아님 — 지나가면 자동 획득하는 조선 과학 아이템) ──
+export interface Beacon {
+  id: string;
+  name: string;
+  emoji: string; // 지도 비콘 아이콘
+  lat: number;
+  lng: number;
+  radius: number; // 자동 획득 반경(m)
+  blurb: string;
+  item: { name: string; emoji: string }; // 획득 디지털 아이템
+}
+
+export const BEACONS: Beacon[] = [
+  {
+    id: 'ujeongchong', name: '우정총국', emoji: '📮', lat: 37.57442, lng: 126.98263, radius: 40,
+    blurb: '우리나라 최초의 우편 행정 관청(1884). 근대 통신의 출발점.',
+    item: { name: '전신 코일', emoji: '📡' },
+  },
+  {
+    id: 'bosingak', name: '보신각', emoji: '🛎️', lat: 37.56985, lng: 126.98361, radius: 40,
+    blurb: '도성에 시각을 알리던 종루. 하루의 시간을 종소리로 전했다.',
+    item: { name: '시보 톱니', emoji: '⏰' },
+  },
+  {
+    id: 'gwangtonggyo', name: '광통교 터', emoji: '🌉', lat: 37.56895, lng: 126.98000, radius: 40,
+    blurb: '청계천을 가로지르던 돌다리. 측량과 치수의 길목이었다.',
+    item: { name: '측량 추', emoji: '📏' },
+  },
+];
+
+interface BeaconEn { name: string; blurb: string; itemName: string; }
+const BEACON_EN: Record<string, BeaconEn> = {
+  ujeongchong: { name: 'Ujeongchong (Postal Admin)', blurb: 'Korea’s first postal-administration office (1884) — the dawn of modern communication.', itemName: 'Telegraph Coil' },
+  bosingak: { name: 'Bosingak Belfry', blurb: 'The bell pavilion that rang out the hours to the walled city.', itemName: 'Time-bell Gear' },
+  gwangtonggyo: { name: 'Gwangtonggyo Bridge Site', blurb: 'A stone bridge over Cheonggyecheon — a node for surveying and water control.', itemName: 'Surveyor’s Weight' },
+};
+
+export function localizeBeacon(b: Beacon, lang: Lang): Beacon {
+  if (lang === 'ko') return b;
+  const e = BEACON_EN[b.id];
+  if (!e) return b;
+  return { ...b, name: e.name, blurb: e.blurb, item: { ...b.item, name: e.itemName } };
+}
+
+export function loadItems(): string[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(window.localStorage.getItem(ITEMS_KEY) || '[]'); } catch { return []; }
+}
+export function collectItem(beaconId: string): boolean {
+  if (typeof window === 'undefined') return false;
+  const list = loadItems();
+  if (list.includes(beaconId)) return false;
+  list.push(beaconId);
+  window.localStorage.setItem(ITEMS_KEY, JSON.stringify(list));
+  return true;
+}
+export function inBeaconRange(b: Beacon, pos: LatLng | null): boolean {
+  return pos ? haversine([b.lat, b.lng], pos) <= b.radius : false;
+}
 
 // ── 기본 제공 유적 5곳 ──
 export const SEED_SITES: Site[] = [

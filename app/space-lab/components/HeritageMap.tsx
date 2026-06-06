@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import { LatLng } from '../lib/geo';
-import { Site } from '../lib/heritage';
+import { Site, Beacon } from '../lib/heritage';
 
 const Inner = dynamic(() => import('./HeritageMapInner'), {
   ssr: false,
@@ -10,6 +10,8 @@ const Inner = dynamic(() => import('./HeritageMapInner'), {
 
 interface Props {
   sites: Site[];
+  beacons: Beacon[];
+  collectedItemIds: string[];
   pos: LatLng | null;
   canSim: boolean;
   onSimMove: (p: LatLng) => void;

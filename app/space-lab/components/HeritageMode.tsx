@@ -4,6 +4,7 @@ import { formatMeters } from '../lib/geo';
 import {
   Site, loadSites, saveSites, resetSites, emptySite, loadCollected, collect, collectPhoto, Collected,
   distanceTo, inRange, localizeSite, localizeEra,
+  Beacon, BEACONS, loadItems, collectItem, inBeaconRange, localizeBeacon,
 } from '../lib/heritage';
 import { useI18n } from '../lib/i18n';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -24,7 +25,10 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
   const [camSite, setCamSite] = useState<Site | null>(null);
   const [editor, setEditor] = useState<{ site: Site; isNew: boolean } | null>(null);
   const [admin, setAdmin] = useState(false);
+  const [items, setItems] = useState<string[]>([]);
+  const [itemToast, setItemToast] = useState<Beacon | null>(null);
   const prompted = useRef<Set<string>>(new Set());
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const L = (s: Site) => localizeSite(s, lang);
 
@@ -40,13 +44,26 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
 
   useEffect(() => { onBgChange(HERITAGE_BG); }, [onBgChange]);
   useEffect(() => {
-    setSites(loadSites()); setCollected(loadCollected());
+    setSites(loadSites()); setCollected(loadCollected()); setItems(loadItems());
     try { if (localStorage.getItem('sl_heritage_admin') === '1') setAdmin(true); } catch {}
   }, []);
+
+  // 근접 아이템: 비콘 반경 진입 시 자동 획득 + 토스트(3초)
+  useEffect(() => {
+    if (!pos) return;
+    const hit = BEACONS.find((b) => inBeaconRange(b, pos) && !items.includes(b.id));
+    if (hit && collectItem(hit.id)) {
+      setItems(loadItems());
+      setItemToast(localizeBeacon(hit, lang));
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setItemToast(null), 3500);
+    }
+  }, [pos, items, lang]);
 
   const doneIds = useMemo(() => new Set(collected.filter((c) => c.name).map((c) => c.siteId)), [collected]);
   const photoIds = useMemo(() => new Set(collected.filter((c) => c.photoUrl).map((c) => c.siteId)), [collected]);
   const dsites = useMemo(() => sites.map((s) => localizeSite(s, lang)), [sites, lang]);
+  const dbeacons = useMemo(() => BEACONS.map((b) => localizeBeacon(b, lang)), [lang]);
 
   // Geofencing: 새로 반경 진입 + 미완료 → 미션 자동 팝업 (1회)
   useEffect(() => {
@@ -96,8 +113,24 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
 
       {error && <div className="sl-statusbar" style={{ color: '#ff9b9b' }}>{error}</div>}
 
+      {/* 획득 아이템 인벤토리 */}
+      <div className="sl-panel sl-panel-heritage" style={{ padding: '12px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <strong className="sl-h1-heritage" style={{ fontSize: 14 }}>🎒 {t({ ko: '획득 아이템', en: 'Items' })} {items.length}/{BEACONS.length}</strong>
+          {dbeacons.map((b) => {
+            const owned = items.includes(b.id);
+            return (
+              <span key={b.id} title={`${b.item.name} — ${b.name}`} style={{ fontSize: 22, opacity: owned ? 1 : 0.28, filter: owned ? 'none' : 'grayscale(1)' }}>
+                {b.item.emoji}
+              </span>
+            );
+          })}
+          <span className="sl-hint" style={{ margin: 0, color: '#8a7045' }}>{t({ ko: '· 비콘(파란 점) 근처를 지나면 자동 획득', en: '· walk near a beacon to auto-collect' })}</span>
+        </div>
+      </div>
+
       <div className="sl-panel sl-panel-heritage">
-        <HeritageMap sites={dsites} pos={pos} canSim={mode === 'sim'} onSimMove={setSimPos} onSiteClick={openSite} />
+        <HeritageMap sites={dsites} beacons={dbeacons} collectedItemIds={items} pos={pos} canSim={mode === 'sim'} onSimMove={setSimPos} onSiteClick={openSite} />
         <p className="sl-hint" style={{ color: '#bba980' }}>
           {mode === 'sim'
             ? t({ ko: '🧪 지도를 클릭해 이동하세요. 유적 반경(노란 원) 30m 안에 들면 미션이 자동으로 열립니다.', en: '🧪 Click the map to move. Enter a site’s 30 m radius (yellow circle) to auto-open its mission.' })
@@ -151,6 +184,16 @@ export default function HeritageMode({ onBgChange }: { onBgChange: (bg: string) 
       )}
       {camSite && (
         <TimeWarpCamera site={camSite} onClose={() => setCamSite(null)} onCapture={(url) => { collectPhoto(camSite.id, url); setCollected(loadCollected()); }} />
+      )}
+
+      {itemToast && (
+        <div className="sl-item-toast" onClick={() => setItemToast(null)}>
+          <span style={{ fontSize: 30 }}>{itemToast.item.emoji}</span>
+          <div>
+            <div style={{ fontWeight: 800 }}>{t({ ko: '아이템 획득!', en: 'Item collected!' })}</div>
+            <div style={{ fontSize: 13 }}>{itemToast.item.name} <span style={{ opacity: 0.7 }}>· {itemToast.name}</span></div>
+          </div>
+        </div>
       )}
     </>
   );

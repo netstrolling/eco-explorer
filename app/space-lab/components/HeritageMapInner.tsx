@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLng } from '../lib/geo';
-import { Site, inRange, localizeEra } from '../lib/heritage';
+import { Site, Beacon, inRange, localizeEra } from '../lib/heritage';
 import { useI18n } from '../lib/i18n';
 
 const emojiIcon = (emoji: string, size = 30, ring = false) =>
@@ -31,14 +31,17 @@ function ClickCatcher({ onMove }: { onMove: (p: LatLng) => void }) {
 
 interface Props {
   sites: Site[];
+  beacons: Beacon[];
+  collectedItemIds: string[];
   pos: LatLng | null;
   canSim: boolean;
   onSimMove: (p: LatLng) => void;
   onSiteClick: (s: Site) => void;
 }
 
-export default function HeritageMapInner({ sites, pos, canSim, onSimMove, onSiteClick }: Props) {
+export default function HeritageMapInner({ sites, beacons, collectedItemIds, pos, canSim, onSimMove, onSiteClick }: Props) {
   const { lang, t } = useI18n();
+  const got = new Set(collectedItemIds);
   const bounds: LatLng[] = sites.map((s) => [s.lat, s.lng] as LatLng);
   if (pos) bounds.push(pos);
   const center: LatLng = pos ?? (sites[0] ? [sites[0].lat, sites[0].lng] : [37.5759, 126.9769]);
@@ -67,6 +70,28 @@ export default function HeritageMapInner({ sites, pos, canSim, onSimMove, onSite
                     <div style={{ fontSize: 12, color: '#7a6033', marginTop: 2 }}>{localizeEra(s.era, lang)} · {s.theme}</div>
                     <div style={{ fontSize: 12, marginTop: 6 }}>“{s.tagline}”</div>
                     <div style={{ fontSize: 12, marginTop: 6, color: active ? '#2e7d32' : '#999' }}>{active ? t({ ko: '🎯 반경 안 — 클릭해 미션 시작', en: '🎯 In range — tap to start the mission' }) : t({ ko: '아직 범위 밖', en: 'Out of range' })}</div>
+                  </div>
+                </Popup>
+              </Marker>
+            </Fragment>
+          );
+        })}
+
+        {/* 근접 아이템 비콘 */}
+        {beacons.map((b) => {
+          const owned = got.has(b.id);
+          return (
+            <Fragment key={b.id}>
+              <Circle center={[b.lat, b.lng]} radius={b.radius}
+                pathOptions={{ color: owned ? '#2ee06a' : '#6c8cff', fillColor: owned ? '#2ee06a' : '#6c8cff', fillOpacity: 0.1, weight: 1, dashArray: '2 6' }} />
+              <Marker position={[b.lat, b.lng]} icon={emojiIcon(owned ? '✨' : b.emoji, 22)}>
+                <Popup>
+                  <div style={{ minWidth: 150 }}>
+                    <strong>{b.emoji} {b.name}</strong>
+                    <div style={{ fontSize: 12, marginTop: 4 }}>{b.blurb}</div>
+                    <div style={{ fontSize: 12, marginTop: 6, color: owned ? '#2e7d32' : '#7a6033' }}>
+                      {owned ? t({ ko: `✅ ${b.item.emoji} ${b.item.name} 획득함`, en: `✅ ${b.item.emoji} ${b.item.name} collected` }) : t({ ko: `${b.item.emoji} ${b.item.name} — 30~40m 안에 들면 자동 획득`, en: `${b.item.emoji} ${b.item.name} — auto-collected within range` })}
+                    </div>
                   </div>
                 </Popup>
               </Marker>

@@ -256,6 +256,17 @@
 .sl-search-item:hover { background: #fff7e6; }
 .sl-admin-badge { background: rgba(46,224,106,0.18) !important; border-color: #2ee06a !important; color: #aef5c8 !important; }
 
+/* 근접 아이템 획득 토스트 */
+.sl-item-toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 1150;
+  display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer;
+  background: linear-gradient(135deg, #2a2418, #14110b); color: #f3e7c8;
+  border: 1px solid #c9962e; border-radius: 14px; box-shadow: 0 8px 30px rgba(201,150,46,0.35);
+  animation: slToastIn 0.35s cubic-bezier(0.16,1,0.3,1);
+  max-width: 90vw;
+}
+@keyframes slToastIn { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
 /* 카메라 미션 */
 .sl-cam {
   position: fixed; inset: 0; z-index: 1200; background: #05060f;
